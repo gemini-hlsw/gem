@@ -114,20 +114,20 @@ object ProgramDao {
       case x => sys.error("Unexpected Option[Step] inputs: " + x)
     }, _ => sys.error("decode only"))
 
-  private implicit val OptionObservationOptionStep: Composite[Option[(Observation[Nothing], Option[Step[_]])]] =
-    Composite[(Option[Observation.Id], Option[String], Option[Step[_]])].xmap({
-      case (None,      None,        None) => None
-      case (Some(oid), Some(title), step) => Some((Observation(oid, title, None, Nil), step))
+  private implicit val OptionObservationOptionStep: Composite[Option[(Observation[Nothing], Option[Sequence.Id], Option[Step[_]])]] =
+    Composite[(Option[Observation.Id], Option[String], Option[Sequence.Id], Option[Step[_]])].xmap({
+      case (None,      None,        None, None) => None
+      case (Some(oid), Some(title), sid,  step) => Some((Observation(oid, title, None, Nil), sid, step))
       case x => sys.error("Unexpected Option[(Observation[Nothing], Option[Step[_]])] inputs: " + x)
     }, _ => sys.error("decode only"))
 
   /** Select a program by Id, with fully-populated Observations and steps. */
-  def selectFull(pid: Program.Id): ConnectionIO[Option[Program[Observation[Step[_]]]]] =
+  def selectFull(pid: Program.Id): ConnectionIO[Option[Program[Observation[Sequence[Step[_]]]]]] =
     sql"""
-      SELECT p.program_id,
-             p.title,
+      SELECT p.title,
              o.observation_id,
              o.title,
+             s.sequence_id,
              s.step_type,
              s.instrument,
              sg.gcal_lamp,
@@ -138,23 +138,25 @@ object ProgramDao {
              LEFT OUTER JOIN observation o ON o.program_id = p.program_id
              LEFT OUTER JOIN step s ON s.observation_id = o.observation_id
              LEFT OUTER JOIN step_gcal sg
-                ON sg.observation_id = s.observation_id AND sg.index = s.index
+                ON sg.sequence_id = s.sequence_id AND sg.index = s.index
              LEFT OUTER JOIN step_science sc
-                ON sc.observation_id = s.observation_id AND sc.index = s.index
+                ON sc.sequence_id = s.sequence_id AND sc.index = s.index
        WHERE p.program_id = $pid
-    ORDER BY o.observation_id, s.index;
-    """.query[(Program.Id, String, Option[(Observation[Nothing], Option[Step[_]])])]
+    ORDER BY s.sequence_id, s.index
+    """.query[(String, Option[(Observation[Nothing], Option[Sequence.Id], Option[Step[_]])])]
        .list.map { rows =>
-         rows.headOption.map { case (pid, title, _) =>
+         rows.headOption.map { case (title, _) =>
 
            // Compute the list of observations by grouping by Obs[Nothing] and then collecting the
            // associated steps, if any, which will remain in order through this transformation.
-           val obs: List[Observation[Step[_]]] =
-             rows.collect { case (_, _, Some(p)) => p }
+           val obs: List[Observation[Sequence[Step[_]]]] =
+             rows.collect { case (_, Some(p)) => p }
                  .groupBy(_._1)
                  .toList
-                 .map { case (obs, rows) =>
-                   obs.copy(steps = rows.collect { case (_, Some(s)) => s } )
+                 .map { case (o, rs) =>
+                   val steps: List[(Sequence.Id, Step[_])] = rs.collect { case (_, Some(sid), Some(step)) => (sid, step) }
+                   val seqs  = steps.groupBy(_._1).map { case (sid, ss) => Sequence(sid, ss.unzip._2) }.toList
+                   o.copy(sequences = seqs)
                  }
 
             // Done!

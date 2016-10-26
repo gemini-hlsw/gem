@@ -9,14 +9,14 @@ object ObservationDao {
 
   def insert(o: Observation[_]): ConnectionIO[Int] =
     sql"""
-      INSERT INTO observation (observation_id, 
-                              program_id, 
-                              observation_index, 
+      INSERT INTO observation (observation_id,
+                              program_id,
+                              observation_index,
                               title,
                               instrument)
-            VALUES (${o.id}, 
-                    ${o.id.pid}, 
-                    ${o.id.index}, 
+            VALUES (${o.id},
+                    ${o.id.pid},
+                    ${o.id.index},
                     ${o.title},
                     ${o.instrument})
     """.update.run
@@ -25,24 +25,24 @@ object ObservationDao {
     sql"""
       SELECT title, instrument
         FROM observation
-       WHERE observation_id = ${id}
+       WHERE observation_id = $id
     """.query[(String, Option[Instrument])]
        .unique
        .map { case (t, i) =>
          Observation(id, t, i, Nil)
-       }      
+       }
 
-  def select(id: Observation.Id): ConnectionIO[Observation[Step[_]]] =
+  def select(id: Observation.Id): ConnectionIO[Observation[Sequence[_]]] =
     for {
       on <- selectFlat(id)
       ss <- StepDao.selectAll(id)
-    } yield on.copy(steps = ss)
+    } yield on.copy(sequences = ss)
 
   def selectAllFlat(pid: Program.Id): ConnectionIO[List[Observation[Nothing]]] =
     sql"""
       SELECT observation_index, title, instrument
         FROM observation
-       WHERE program_id = ${pid}
+       WHERE program_id = $pid
     ORDER BY observation_index
     """.query[(Int, String, Option[Instrument])]
        .map { case (n, t, i) =>
