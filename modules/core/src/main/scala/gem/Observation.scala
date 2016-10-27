@@ -5,10 +5,10 @@ import gem.enum.Instrument
 import scalaz._, Scalaz._
 
 case class Observation[S](
-  id: Observation.Id, 
-  title: String, 
+  id: Observation.Id,
+  title: String,
   instrument: Option[Instrument], // redundant? this is on the steps too
-  steps: List[S])
+  sequences: List[S])
 
 object Observation {
 
@@ -35,8 +35,10 @@ object Observation {
   implicit def ObservationTraverse[T]: Traverse[Observation[?]] =
     new Traverse[Observation[?]] {
       def traverseImpl[G[_]: Applicative, A, B](fa: Observation[A])(f: A => G[B]): G[Observation[B]] =
-        fa.steps.traverse(f).map(ss => fa.copy(steps = ss))
+        fa.sequences.traverse(f).map(ss => fa.copy(sequences = ss))
     }
+
+  implicit val EqualObservationId: Equal[Observation.Id] = Equal.equalA
 
 }
 

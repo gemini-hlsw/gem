@@ -3,13 +3,12 @@ package gem
 import gem.dao._
 import gem.enum._
 import gem.config._
-
-import edu.gemini.pot.sp.{ISPProgram, ISPObservation}
+import edu.gemini.pot.sp.{ISPObservation, ISPProgram}
 import edu.gemini.spModel.io.SpImportService
 import edu.gemini.spModel.core._
-import edu.gemini.pot.spdb.{ IDBDatabaseService, DBLocalDatabase }
+import edu.gemini.pot.spdb.{DBLocalDatabase, IDBDatabaseService}
 import edu.gemini.spModel.config.ConfigBridge
-import edu.gemini.spModel.config.map.ConfigValMapInstances.IDENTITY_MAP;
+import edu.gemini.spModel.config.map.ConfigValMapInstances.IDENTITY_MAP
 
 import java.io._
 import java.{ util => JU }
@@ -17,13 +16,13 @@ import java.util.logging.{ Logger, Level }
 import java.time.Duration
 
 import scala.collection.JavaConverters._
-
-import scalaz._, Scalaz._
+import scalaz._
+import Scalaz._
 import scalaz.effect._
 import scalaz.concurrent.Task
 import scalaz.std.effect.closeable._
-
 import doobie.imports._
+import edu.gemini.spModel.gemini.flamingos2.Flamingos2.WindowCover
 
 object Importer extends SafeApp {
   import Program.Id._
@@ -84,9 +83,10 @@ object Importer extends SafeApp {
         )
 
         val configs = ss.flatMap(unsafeFromConfig)
+        val sid     = Sequence.Id.unsafeFromName(newObs.id, "seq0") // need a default id for old sequences
 
         ObservationDao.insert(newObs) *>
-        configs.zipWithIndex.traverse { case (c, n) => StepDao.insert(newObs.id, n, c) }.void
+        configs.zipWithIndex.traverse { case (c, n) => StepDao.insert(sid, n, c) }.void
 
       }
 

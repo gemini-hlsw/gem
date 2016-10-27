@@ -527,9 +527,12 @@ COMMENT ON TABLE semester IS '// TODO: start/end dates for site';
 
 CREATE TABLE step (
     observation_id character varying(40) NOT NULL,
+    sequence_name character varying(20) NOT NULL,
     index smallint NOT NULL,
     instrument identifier NOT NULL,
-    step_type step_type NOT NULL
+    sequence_id character varying(60) NOT NULL,
+    step_type step_type NOT NULL,
+    CONSTRAINT sequence_id_check CHECK (((sequence_id)::text = (((observation_id)::text || '-'::text) || sequence_name)))
 );
 
 
@@ -541,7 +544,7 @@ ALTER TABLE step OWNER TO postgres;
 
 CREATE TABLE step_bias (
     index smallint NOT NULL,
-    observation_id character varying(40) NOT NULL
+    sequence_id character varying(60) NOT NULL
 );
 
 
@@ -553,7 +556,7 @@ ALTER TABLE step_bias OWNER TO postgres;
 
 CREATE TABLE step_dark (
     index smallint NOT NULL,
-    observation_id character varying(40) NOT NULL
+    sequence_id character varying(60) NOT NULL
 );
 
 
@@ -564,7 +567,7 @@ ALTER TABLE step_dark OWNER TO postgres;
 --
 
 CREATE TABLE step_f2 (
-    observation_id character varying(40) NOT NULL,
+    sequence_id character varying(60) NOT NULL,
     index smallint NOT NULL,
     fpu identifier NOT NULL,
     mos_preimaging boolean NOT NULL,
@@ -591,7 +594,7 @@ COMMENT ON COLUMN step_f2.exposure_time IS 'exposure time in seconds ... should 
 
 CREATE TABLE step_gcal (
     index smallint NOT NULL,
-    observation_id character varying(40) NOT NULL,
+    sequence_id character varying(60) NOT NULL,
     gcal_lamp identifier,
     shutter gcal_shutter NOT NULL
 );
@@ -605,7 +608,7 @@ ALTER TABLE step_gcal OWNER TO postgres;
 
 CREATE TABLE step_science (
     index smallint NOT NULL,
-    observation_id character varying(40) NOT NULL,
+    sequence_id character varying(60) NOT NULL,
     offset_p double precision NOT NULL,
     offset_q double precision NOT NULL
 );
@@ -849,7 +852,7 @@ COPY semester (semester_id, year, half) FROM stdin;
 -- Data for Name: step; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY step (observation_id, index, instrument, step_type) FROM stdin;
+COPY step (sequence_id, index, instrument, step_type) FROM stdin;
 \.
 
 
@@ -857,7 +860,7 @@ COPY step (observation_id, index, instrument, step_type) FROM stdin;
 -- Data for Name: step_bias; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY step_bias (index, observation_id) FROM stdin;
+COPY step_bias (index, sequence_id) FROM stdin;
 \.
 
 
@@ -865,7 +868,7 @@ COPY step_bias (index, observation_id) FROM stdin;
 -- Data for Name: step_dark; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY step_dark (index, observation_id) FROM stdin;
+COPY step_dark (index, sequence_id) FROM stdin;
 \.
 
 
@@ -873,7 +876,7 @@ COPY step_dark (index, observation_id) FROM stdin;
 -- Data for Name: step_f2; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY step_f2 (observation_id, index, fpu, mos_preimaging, exposure_time, filter, lyot_wheel, disperser, window_cover) FROM stdin;
+COPY step_f2 (sequence_id, index, fpu, mos_preimaging, exposure_time, filter, lyot_wheel, disperser, window_cover) FROM stdin;
 \.
 
 
@@ -881,7 +884,7 @@ COPY step_f2 (observation_id, index, fpu, mos_preimaging, exposure_time, filter,
 -- Data for Name: step_gcal; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY step_gcal (index, observation_id, gcal_lamp, shutter) FROM stdin;
+COPY step_gcal (index, sequence_id, gcal_lamp, shutter) FROM stdin;
 \.
 
 
@@ -889,7 +892,7 @@ COPY step_gcal (index, observation_id, gcal_lamp, shutter) FROM stdin;
 -- Data for Name: step_science; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY step_science (index, observation_id, offset_p, offset_q) FROM stdin;
+COPY step_science (index, sequence_id, offset_p, offset_q) FROM stdin;
 \.
 
 
@@ -1034,7 +1037,7 @@ ALTER TABLE ONLY semester
 --
 
 ALTER TABLE ONLY step_bias
-    ADD CONSTRAINT step_bias_pkey PRIMARY KEY (index, observation_id);
+    ADD CONSTRAINT step_bias_pkey PRIMARY KEY (index, sequence_id);
 
 
 --
@@ -1042,7 +1045,7 @@ ALTER TABLE ONLY step_bias
 --
 
 ALTER TABLE ONLY step_dark
-    ADD CONSTRAINT step_dark_pkey PRIMARY KEY (index, observation_id);
+    ADD CONSTRAINT step_dark_pkey PRIMARY KEY (index, sequence_id);
 
 
 --
@@ -1050,7 +1053,7 @@ ALTER TABLE ONLY step_dark
 --
 
 ALTER TABLE ONLY step_f2
-    ADD CONSTRAINT step_f2_pkey PRIMARY KEY (index, observation_id);
+    ADD CONSTRAINT step_f2_pkey PRIMARY KEY (index, sequence_id);
 
 
 --
@@ -1058,7 +1061,7 @@ ALTER TABLE ONLY step_f2
 --
 
 ALTER TABLE ONLY step_gcal
-    ADD CONSTRAINT step_gcal_pkey PRIMARY KEY (index, observation_id);
+    ADD CONSTRAINT step_gcal_pkey PRIMARY KEY (index, sequence_id);
 
 
 --
@@ -1066,7 +1069,7 @@ ALTER TABLE ONLY step_gcal
 --
 
 ALTER TABLE ONLY step
-    ADD CONSTRAINT step_pkey PRIMARY KEY (index, observation_id);
+    ADD CONSTRAINT step_pkey PRIMARY KEY (index, sequence_id);
 
 
 --
@@ -1074,7 +1077,7 @@ ALTER TABLE ONLY step
 --
 
 ALTER TABLE ONLY step_science
-    ADD CONSTRAINT step_science_pkey PRIMARY KEY (index, observation_id);
+    ADD CONSTRAINT step_science_pkey PRIMARY KEY (index, sequence_id);
 
 
 --
@@ -1110,7 +1113,7 @@ CREATE INDEX ix_program_id ON program USING btree (program_id);
 -- Name: ix_step; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX ix_step ON step USING btree (observation_id, index);
+CREATE INDEX ix_step ON step USING btree (sequence_id, index);
 
 
 --
@@ -1118,6 +1121,13 @@ CREATE INDEX ix_step ON step USING btree (observation_id, index);
 --
 
 CREATE INDEX ix_step_oid ON step USING btree (observation_id);
+
+
+--
+-- Name: ix_step_sid; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX ix_step_sid ON step USING btree (sequence_id);
 
 
 --
@@ -1196,7 +1206,7 @@ ALTER TABLE ONLY program
 --
 
 ALTER TABLE ONLY step_bias
-    ADD CONSTRAINT step_bias_index_fkey FOREIGN KEY (index, observation_id) REFERENCES step(index, observation_id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT step_bias_index_fkey FOREIGN KEY (index, sequence_id) REFERENCES step(index, sequence_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1204,7 +1214,7 @@ ALTER TABLE ONLY step_bias
 --
 
 ALTER TABLE ONLY step_dark
-    ADD CONSTRAINT step_dark_index_fkey FOREIGN KEY (index, observation_id) REFERENCES step(index, observation_id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT step_dark_index_fkey FOREIGN KEY (index, sequence_id) REFERENCES step(index, sequence_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1236,7 +1246,7 @@ ALTER TABLE ONLY step_f2
 --
 
 ALTER TABLE ONLY step_f2
-    ADD CONSTRAINT step_f2_index_fkey FOREIGN KEY (index, observation_id) REFERENCES step(index, observation_id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT step_f2_index_fkey FOREIGN KEY (index, sequence_id) REFERENCES step(index, sequence_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1268,7 +1278,7 @@ ALTER TABLE ONLY step_gcal
 --
 
 ALTER TABLE ONLY step_gcal
-    ADD CONSTRAINT step_gcal_index_fkey FOREIGN KEY (index, observation_id) REFERENCES step(index, observation_id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT step_gcal_index_fkey FOREIGN KEY (index, sequence_id) REFERENCES step(index, sequence_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1292,7 +1302,7 @@ ALTER TABLE ONLY step
 --
 
 ALTER TABLE ONLY step_science
-    ADD CONSTRAINT step_science_index_fkey FOREIGN KEY (index, observation_id) REFERENCES step(index, observation_id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT step_science_index_fkey FOREIGN KEY (index, sequence_id) REFERENCES step(index, sequence_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
