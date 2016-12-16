@@ -8,6 +8,8 @@ lazy val argonautShapelessVersion = "1.2.0-M1"
 lazy val scalaTestVersion         = "3.0.0"
 lazy val scalaCheckVersion        = "1.13.1"
 
+enablePlugins(GitVersioning)
+
 lazy val testLibs = Seq(
   "org.scalatest"  %% "scalatest"  % scalaTestVersion  % "test",
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion % "test"
@@ -31,7 +33,8 @@ lazy val commonSettings = Seq(
     "-Ywarn-unused-import"
   ),
   addCompilerPlugin("org.spire-math" %% "kind-projector" % kpVersion),
-  libraryDependencies ++= ("org.scala-lang" %  "scala-reflect" % scalaVersion.value +: testLibs)
+  libraryDependencies ++= ("org.scala-lang" %  "scala-reflect" % scalaVersion.value +: testLibs),
+  name := "gem-" + name.value
 )
 
 lazy val flywaySettings = Seq(
