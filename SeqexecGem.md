@@ -41,26 +41,34 @@ All the above is type safe and straightforward to use.
 
 * Avoids eventually having to circle back and rewrite parts of the seqexec to migrate to the new model.
 * Exercises the new sequence model well before it would otherwise be available for production, partially addressing the governing board concerns.
-* Exposes the new program model and database to the rest of the high-level team.
+* Exposes the new program model and database to the rest of the high-level team and gets everybody working on the same codebase.
 * Necessitates combining the current `ocs3` and `gem` builds and deployment models, which keeps them from diverging.
 * Concentrates all OCS2 to OCS3 translation code in one place, instead of having both seqexec and "gem" projects translating and depending on OCS2.
 * Allows us to flesh out dataset record, observing events, and logs in the new program model and postgres database.
+* Prioritizes future development, focusing on seqexec needs like full instrument support.
 
 
-## Sketching Out a Course
+## Sketching Out a Proposal
 
 The technical issue preventing the new seqexec from working with the new sequence model today is that it must continue to read sequences from the
 existing Observing Database.  The new science program model is not complete and there is no UI for editing it.  A potential solution is to offer
-an enqueue service that:
+an enqueue/translator service that:
 
-* Contacts the ODB and requests the OCS2 `ConfigSequence` over trpc. 
+* Contacts the ODB and requests the OCS2 `ConfigSequence` over trpc, or perhaps asks for the XML representation if that helps avoid dependency
+issues.
 * Translates the config sequence into a minimal science program with just enough information to contain the sequence.
 * Writes the sequence to postgres database tables, replacing any existing sequence information for the observation.
 
 The seqexec could then work directly with the new sequence in the postgres database.  The enqueue service could be developed separately from the
 rest of the combined seqexec/gem project because it will be dependent on OCS2 versions of pervasive libraries like `scalaz`.  The rest of the new
 codebase is then freed of its OCS2 shackles.  (Though of course, the seqexec will still need to use the XMLPRC OCS2 `wdba` services to record
-execution events in the Observing Database.)
+execution events in the Observing Database.)  This same translation project would eventually be responsible for migration from the OCS2 science
+program as well.
+
+Eventually as observations are edited any sequence information traslated and added to the postgres database will of course be out-of-date with
+the ODB.  This is why enqueueing observations or refetching from the ODB must always replace any existing sequence information.  Eventually when
+everything is running on OCS3 we can simply delete the enqueue service since the seqexec will then always have the program to work with in the
+postgres database.
 
 As Carlos suggested, pressing the "Queue" button in today's OT could be made to trigger the enqueue service to perform these steps.
 
