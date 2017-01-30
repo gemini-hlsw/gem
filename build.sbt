@@ -57,6 +57,7 @@ lazy val core = project
       "org.scalaz"  %% "scalaz-core" % scalazVersion,
       "com.chuusai" %% "shapeless"   % shapelessVersion
     ),
+    sourceManaged <<= baseDirectory { _ / "src_managed" },
     sourceGenerators in Compile +=
       Def.task { gen2((sourceManaged in Compile).value / "gem").unsafePerformIO }.taskValue
   )
