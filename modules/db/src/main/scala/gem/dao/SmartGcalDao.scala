@@ -27,7 +27,7 @@ object SmartGcalDao {
 
   def insert(l: GcalLampType, b: GcalBaselineType, k: SmartGcalKey, g: GcalConfig): ConnectionIO[Int] =
     for {
-      id <- GcalDao.insert(g, None)
+      id <- GcalDao.insert(g)
       r  <-
         k match {
           case f2: F2SmartGcalKey => Statements.insertSmartF2(l, b, id, f2).run

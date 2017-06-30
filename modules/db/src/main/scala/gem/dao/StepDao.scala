@@ -36,7 +36,7 @@ object StepDao {
               case DarkStep(_)         => Statements.insertDarkSlice(id).run
               case ScienceStep(_, t)   => Statements.insertScienceSlice(id, t).run
               case SmartGcalStep(_, t) => Statements.insertSmartGcalSlice(id, t).run
-              case GcalStep(_, g)      => GcalDao.insert(g, Some(id)) >>= (Statements.insertGcalStep(id, _).run)
+              case GcalStep(_, g)      => GcalDao.insert(g) >>= (Statements.insertGcalStep(id, _).run)
             }
       _  <- insertConfigSlice(id, s.dynamicConfig)
     } yield id

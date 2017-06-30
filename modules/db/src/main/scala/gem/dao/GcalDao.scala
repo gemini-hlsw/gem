@@ -13,8 +13,8 @@ import java.time.Duration
 
 object GcalDao {
 
-  def insert(gcal: GcalConfig, step: Option[Int]): ConnectionIO[Int] =
-    Statements.insert(gcal, step).withUniqueGeneratedKeys[Int]("gcal_id") // janky, hm
+  def insert(gcal: GcalConfig): ConnectionIO[Int] =
+    Statements.insert(gcal).withUniqueGeneratedKeys[Int]("gcal_id") // janky, hm
 
   def select(id: Int): ConnectionIO[Option[GcalConfig]] =
     Statements.select(id).option.map(_.flatten)
@@ -29,10 +29,10 @@ object GcalDao {
         Distinct.short("coadds").xmap(CoAdds(_), _.toShort)
     }
 
-    def insert(gcal: GcalConfig, step: Option[Int]): Update0 = {
+    def insert(gcal: GcalConfig): Update0 = {
       val arcs: GcalArc => Boolean = gcal.arcs.member
-      sql"""INSERT INTO gcal (step_id, continuum, ar_arc, cuar_arc, thar_arc, xe_arc, filter, diffuser, shutter, exposure_time, coadds)
-            VALUES ($step, ${gcal.continuum}, ${arcs(ArArc)}, ${arcs(CuArArc)}, ${arcs(ThArArc)}, ${arcs(XeArc)}, ${gcal.filter}, ${gcal.diffuser}, ${gcal.shutter}, ${gcal.exposureTime}, ${CoAdds(gcal.coadds)})
+      sql"""INSERT INTO gcal (continuum, ar_arc, cuar_arc, thar_arc, xe_arc, filter, diffuser, shutter, exposure_time, coadds)
+            VALUES (${gcal.continuum}, ${arcs(ArArc)}, ${arcs(CuArArc)}, ${arcs(ThArArc)}, ${arcs(XeArc)}, ${gcal.filter}, ${gcal.diffuser}, ${gcal.shutter}, ${gcal.exposureTime}, ${CoAdds(gcal.coadds)})
          """.update
     }
 

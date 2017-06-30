@@ -7,6 +7,6 @@ package check
 class GcalCheck extends Check {
   import GcalDao.Statements._
   "GcalDao.Statements" should
-            "insert" in check(insert(Dummy.gcalConfig, None))
+            "insert" in check(insert(Dummy.gcalConfig))
   it should "select" in check(select(0))
 }
