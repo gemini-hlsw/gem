@@ -41,9 +41,10 @@ object FileImporter extends SafeApp with DoobieClient {
 
   val clean: ConnectionIO[Unit] =
     for {
-      _ <- sql"truncate program cascade".update.run
-      _ <- sql"truncate log".update.run
-      _ <- sql"delete from semester".update.run
+      _ <- sql"DELETE FROM gcal USING step_gcal WHERE gcal.gcal_id = step_gcal.gcal_id".update.run
+      _ <- sql"TRUNCATE program, static_config CASCADE".update.run
+      _ <- sql"TRUNCATE log".update.run
+      _ <- sql"DELETE FROM semester".update.run
     } yield ()
 
   def read(f: File): IO[Elem] =
