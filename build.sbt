@@ -13,6 +13,10 @@ lazy val http4sVersion            = "0.15.2a"
 lazy val scalaXmlVerson           = "1.0.6"
 lazy val scalaParsersVersion      = "1.0.4"
 lazy val tucoVersion              = "0.1.1"
+lazy val catsVersion              = "0.9.0"
+lazy val catsEffectVersion        = "0.3"
+lazy val declineVersion           = "0.2.2"
+lazy val mouseVersion             = "0.9"
 
 enablePlugins(GitVersioning)
 
@@ -255,11 +259,12 @@ lazy val ctl = project
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
   .settings (
-    resolvers += "bmjames Bintray Repo" at "https://dl.bintray.com/bmjames/maven",
+    resolvers += Resolver.bintrayRepo("bkirwi", "maven"),
     libraryDependencies ++= Seq(
-      "org.scalaz"  %% "scalaz-core"   % scalazVersion,
-      "org.scalaz"  %% "scalaz-effect" % scalazVersion,
-      "net.bmjames" %% "scala-optparse-applicative" % "0.5"
+      "org.typelevel"           %% "cats"        % catsVersion,
+      "org.typelevel"           %% "cats-effect" % catsEffectVersion,
+      "com.monovore"            %% "decline"     % declineVersion,
+      "com.github.benhutchison" %% "mouse"       % mouseVersion
     ),
     addCommandAlias("gemctl", "ctl/runMain gem.ctl.main")
   )
