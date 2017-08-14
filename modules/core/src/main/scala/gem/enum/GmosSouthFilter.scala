@@ -15,7 +15,7 @@ sealed abstract class GmosSouthFilter(
   val tag: String,
   val shortName: String,
   val longName: String,
-  val wavelength: gem.math.Wavelength,
+  val wavelength: gem.math.WavelengthInÅngström,
   val obsolete: Boolean
 )
 

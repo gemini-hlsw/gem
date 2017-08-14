@@ -5,7 +5,7 @@ package gem
 package config
 
 import gem.enum._
-import gem.math.Wavelength
+import gem.math.WavelengthInÅngström
 
 import java.time.Duration
 
@@ -70,17 +70,17 @@ object DynamicConfig {
 
     final case class GmosNorthSearch(
       gmos:       GmosNorthCommon,
-      wavelength: Option[Wavelength]
+      wavelength: Option[WavelengthInÅngström]
     ) extends SmartGcalSearchKey
 
     final case class GmosSouthSearch(
       gmos:       GmosSouthCommon,
-      wavelength: Option[Wavelength]
+      wavelength: Option[WavelengthInÅngström]
     ) extends SmartGcalSearchKey
 
     final case class GmosDefinition[D, F, U](
-      gmos:            GmosCommon[D, F, U],
-      wavelengthRange: (Wavelength, Wavelength)
+      gmos:       GmosCommon[D, F, U],
+      wavelength: (WavelengthInÅngström, WavelengthInÅngström)
     )
 
     type GmosNorthDefinition = GmosDefinition[GmosNorthDisperser, GmosNorthFilter, GmosNorthFpu]

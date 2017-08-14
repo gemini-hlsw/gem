@@ -4,7 +4,7 @@
 package gem.config
 
 import gem.enum._
-import gem.math.{ Offset, Wavelength }
+import gem.math.{ Offset, WavelengthInÅngström }
 import java.time.Duration
 
 import scalaz._
@@ -262,6 +262,6 @@ object GmosConfig {
   final case class GmosGrating[D](
     disperser:  D,
     order:      GmosDisperserOrder,
-    wavelength: Wavelength
+    wavelength: WavelengthInÅngström
   )
 }

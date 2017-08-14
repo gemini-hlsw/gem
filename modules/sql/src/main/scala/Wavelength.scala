@@ -5,7 +5,7 @@ package gem.sql
 
 import java.math.RoundingMode.HALF_UP
 
-/** Minimal Wavelength classes to support reading from the enum
+/** Minimal WavelengthInÅngström classes to support reading from the enum
   * tables.
   */
 sealed trait Wavelength extends Product with Serializable {

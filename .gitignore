@@ -23,6 +23,7 @@ bin/
 
 # Ctags
 .tags
+.tags1
 
 # ENSIME
 .ensime

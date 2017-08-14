@@ -14,13 +14,13 @@ object F2Enums {
     List(
 
       EnumDef.fromQuery("F2Disperser", "Flamingos2 dispersers") {
-        type R = Record.`'tag -> String, 'shortName -> String, 'longName -> String, 'wavelength -> Wavelength.Um`.T
-        sql"SELECT id, id tag, short_name, long_name, wavelength FROM e_f2_disperser".query[(String, R)]
+        type R = Record.`'tag -> String, 'shortName -> String, 'longName -> String, 'Wavelength -> Wavelength.Um`.T
+        sql"SELECT id, id tag, short_name, long_name, Wavelength FROM e_f2_disperser".query[(String, R)]
       },
 
       EnumDef.fromQuery("F2Filter", "Flamingos2 filters") {
-        type R = Record.`'tag -> String, 'shortName -> String, 'longName -> String, 'wavelength -> Option[Wavelength.Um], 'obsolete -> Boolean`.T
-        sql"SELECT id, id tag, short_name, long_name, wavelength, obsolete FROM e_f2_filter".query[(String, R)]
+        type R = Record.`'tag -> String, 'shortName -> String, 'longName -> String, 'Wavelength -> Option[Wavelength.Um], 'obsolete -> Boolean`.T
+        sql"SELECT id, id tag, short_name, long_name, Wavelength, obsolete FROM e_f2_filter".query[(String, R)]
       },
 
       EnumDef.fromQuery("F2Fpu", "Flamingos2 focal plane units") {

@@ -15,7 +15,7 @@ sealed abstract class F2Disperser(
   val tag: String,
   val shortName: String,
   val longName: String,
-  val wavelength: gem.math.Wavelength
+  val Wavelength: gem.math.WavelengthInÅngström
 )
 
 object F2Disperser {

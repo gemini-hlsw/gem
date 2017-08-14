@@ -8,7 +8,7 @@ import gem.SmartGcal._
 import gem.config._
 import gem.config.DynamicConfig.{ SmartGcalKey, SmartGcalSearchKey }
 import gem.enum._
-import gem.math.Wavelength
+import gem.math.WavelengthInÅngström
 import doobie.imports._
 
 import scalaz._
@@ -241,10 +241,10 @@ object SmartGcalDao {
         DROP INDEX IF EXISTS smart_gmos_south_index
       """.update
 
-    private val MinWavelength = 0
-    private val MaxWavelength = Int.MaxValue
+    private val MinWavelengthInÅngström = 0
+    private val MaxWavelengthInÅngström = Int.MaxValue
 
-    private def selectGmos[D, F, U](table: String, searchType: Fragment, dfu: Fragment, k: SmartGcalKey.GmosCommon[D,F,U], w: Option[Wavelength]): Fragment =
+    private def selectGmos[D, F, U](table: String, searchType: Fragment, dfu: Fragment, k: SmartGcalKey.GmosCommon[D,F,U], w: Option[WavelengthInÅngström]): Fragment =
       Fragment.const(
         s"""SELECT gcal_id
                FROM $table
@@ -253,8 +253,8 @@ object SmartGcalDao {
                 AND x_binning       = ${k.xBinning}
                 AND y_binning       = ${k.yBinning}
                 AND amp_gain        = ${k.ampGain}
-                AND min_wavelength <= ${w.map(_.toAngstroms).getOrElse(MaxWavelength)}
-                AND max_wavelength >  ${w.map(_.toAngstroms).getOrElse(MinWavelength)}
+                AND min_wavelength <= ${w.map(_.value).getOrElse(MaxWavelengthInÅngström)}
+                AND max_wavelength >  ${w.map(_.value).getOrElse(MinWavelengthInÅngström)}
          """
 
     def lampFragment(l: GcalLampType): Fragment =

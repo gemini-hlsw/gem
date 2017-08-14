@@ -177,7 +177,8 @@ lazy val core = crossProject
       "org.scalaz"   %%% "scalaz-core"          % scalazVersion,
       "com.chuusai"  %%% "shapeless"            % shapelessVersion,
       "org.tpolecat" %%% "atto-core"            % attoVersion,
-      "org.tpolecat" %%% "atto-compat-scalaz72" % attoVersion
+      "org.tpolecat" %%% "atto-compat-scalaz72" % attoVersion,
+      "com.github.to-ithaca" %% "libra" % "0.2.1-SNAPSHOT" // scala jvm only for now
     )
   )
   .jsSettings(

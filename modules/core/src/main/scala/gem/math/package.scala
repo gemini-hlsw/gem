@@ -12,4 +12,12 @@ package object math {
   type Dec = Declination
   val  Dec:  Declination.type = Declination
 
+  import libra.si._
+
+  type Wavelength
+
+  type Ångström = MetricUnit[1, Wavelength]
+
+  type WavelengthInÅngström = libra.QuantityOf[Int, Wavelength, Ångström]
+
 }

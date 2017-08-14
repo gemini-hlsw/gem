@@ -15,7 +15,7 @@ sealed abstract class F2Filter(
   val tag: String,
   val shortName: String,
   val longName: String,
-  val wavelength: Option[gem.math.Wavelength],
+  val Wavelength: Option[gem.math.WavelengthInÅngström],
   val obsolete: Boolean
 )
 
@@ -34,7 +34,7 @@ object F2Filter {
   /** @group Constructors */ case object KBlue extends F2Filter("KBlue", "K-blue", "K-blue (2.06 um)", Some(gem.math.Wavelength.unsafeFromAngstroms(20600)), false)
   /** @group Constructors */ case object KRed extends F2Filter("KRed", "K-red", "K-red (2.31 um)", Some(gem.math.Wavelength.unsafeFromAngstroms(23100)), false)
   /** @group Constructors */ case object Open extends F2Filter("Open", "Open", "Open", Some(gem.math.Wavelength.unsafeFromAngstroms(16000)), true)
-  /** @group Constructors */ case object Dark extends F2Filter("Dark", "Dark", "Dark", Option.empty[gem.math.Wavelength], true)
+  /** @group Constructors */ case object Dark extends F2Filter("Dark", "Dark", "Dark", Option.empty[gem.math.WavelengthInÅngström], true)
 
   /** All members of F2Filter, in canonical order. */
   val all: List[F2Filter] =

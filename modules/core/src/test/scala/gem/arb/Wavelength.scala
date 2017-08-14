@@ -4,14 +4,15 @@
 package gem
 package arb
 
-import gem.math.Wavelength
+import gem.math.{ Wavelength, WavelengthInÅngström }
 import org.scalacheck._
 import org.scalacheck.Gen._
 
 trait ArbWavelength {
 
-  implicit def arbWavelength: Arbitrary[Wavelength] =
+  implicit def arbWavelengthInÅngström: Arbitrary[WavelengthInÅngström] =
     Arbitrary(choose(0, Int.MaxValue).map(Wavelength.unsafeFromAngstroms(_)))
 
 }
+
 object ArbWavelength extends ArbWavelength
