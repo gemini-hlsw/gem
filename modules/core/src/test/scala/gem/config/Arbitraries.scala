@@ -12,6 +12,7 @@ import gem.math.{ Offset, Wavelength }
 
 import org.scalacheck._
 import org.scalacheck.Arbitrary._
+import spire.math.UInt
 
 import java.time.Duration
 
@@ -22,7 +23,6 @@ trait Arbitraries {
   import ArbEnumerated._
   import ArbDisjunction._
   import ArbOffset._
-
 
   // Surely this is already defined somewhere?
   implicit val functorGen = new Functor[Gen] {
@@ -208,7 +208,7 @@ trait Arbitraries {
       for {
         d <- arbitrary[GmosNorthDisperser]
         o <- arbitrary[GmosDisperserOrder]
-        w <- Gen.choose(3000, 12000).map(Wavelength.unsafeFromAngstroms)
+        w <- Gen.choose(3000, 12000).map(i => Wavelength.fromAngstroms(UInt(i)))
       } yield GmosConfig.GmosGrating(d, o, w)
     }
 
@@ -217,7 +217,7 @@ trait Arbitraries {
       for {
         d <- arbitrary[GmosSouthDisperser]
         o <- arbitrary[GmosDisperserOrder]
-        w <- Gen.choose(3000, 12000).map(Wavelength.unsafeFromAngstroms)
+        w <- Gen.choose(3000, 12000).map(i => Wavelength.fromAngstroms(UInt(i)))
       } yield GmosConfig.GmosGrating(d, o, w)
     }
 

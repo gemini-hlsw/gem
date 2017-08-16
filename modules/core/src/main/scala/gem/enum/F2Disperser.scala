@@ -6,6 +6,7 @@ package enum
 
 import scalaz.syntax.equal._
 import scalaz.std.string._
+import spire.syntax.literals._
 
 /**
  * Enumerated type for Flamingos2 dispersers.
@@ -20,9 +21,9 @@ sealed abstract class F2Disperser(
 
 object F2Disperser {
 
-  /** @group Constructors */ case object R1200JH extends F2Disperser("R1200JH", "R1200JH", "R=1200 (J + H) grism", gem.math.Wavelength.unsafeFromAngstroms(13900))
-  /** @group Constructors */ case object R1200HK extends F2Disperser("R1200HK", "R1200HK", "R=1200 (H + K) grism", gem.math.Wavelength.unsafeFromAngstroms(18710))
-  /** @group Constructors */ case object R3000 extends F2Disperser("R3000", "R3000", "R=3000 (J or H or K) grism", gem.math.Wavelength.unsafeFromAngstroms(16500))
+  /** @group Constructors */ case object R1200JH extends F2Disperser("R1200JH", "R1200JH", "R=1200 (J + H) grism", gem.math.Wavelength.fromAngstroms(ui"13900"))
+  /** @group Constructors */ case object R1200HK extends F2Disperser("R1200HK", "R1200HK", "R=1200 (H + K) grism", gem.math.Wavelength.fromAngstroms(ui"18710"))
+  /** @group Constructors */ case object R3000 extends F2Disperser("R3000", "R3000", "R=3000 (J or H or K) grism", gem.math.Wavelength.fromAngstroms(ui"16500"))
 
   /** All members of F2Disperser, in canonical order. */
   val all: List[F2Disperser] =

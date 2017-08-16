@@ -8,6 +8,8 @@ import gem.enum._
 import gem.config.GcalConfig.GcalLamp
 import gem.math.{ Angle, Offset, Wavelength, WavelengthInÅngström }
 
+import spire.math.UInt
+
 import scalaz._
 import Scalaz._
 
@@ -32,7 +34,7 @@ object Parsers {
     double.map(Angle.fromDoubleArcseconds)
 
   val angstroms: PioParse[WavelengthInÅngström] =
-    int.map(Wavelength.unsafeFromAngstroms)
+    int.map(i => Wavelength.fromAngstroms(UInt(i)))
 
   val instrument: PioParse[Instrument] = enum(
     "AcqCam"     -> gem.enum.Instrument.AcqCam,
@@ -264,7 +266,7 @@ object Parsers {
     )
 
     val disperserLambda: PioParse[WavelengthInÅngström] =
-      double.map(d => Wavelength.unsafeFromAngstroms((d * 10.0).round.toInt))
+      double.map(d => Wavelength.fromAngstroms(UInt((d * 10.0).round.toInt)))
 
     val dtax: PioParse[GmosDtax] = enum(
       "-6" -> GmosDtax.MinusSix,

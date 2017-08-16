@@ -8,8 +8,9 @@ import gem.math.WavelengthInÅngström._
 import org.scalatest.prop.PropertyChecks
 import org.scalatest.{ FlatSpec, Matchers }
 
+import spire.math.UInt
+
 import scalaz.{ Equal, Order }
-import scalaz.std.anyVal._
 
 @SuppressWarnings(Array("org.wartremover.warts.ToString", "org.wartremover.warts.Equals"))
 class WavelengthSpec extends FlatSpec with Matchers with PropertyChecks {
@@ -23,7 +24,7 @@ class WavelengthSpec extends FlatSpec with Matchers with PropertyChecks {
 
   "Order" must "be consistent with .toAngstroms" in {
     forAll { (a: WavelengthInÅngström, b: WavelengthInÅngström) =>
-      Order[Int].order(a.value, b.value) shouldEqual
+      Order[UInt].order(a.value, b.value) shouldEqual
       Order[WavelengthInÅngström].order(a, b)
     }
   }
@@ -36,13 +37,7 @@ class WavelengthSpec extends FlatSpec with Matchers with PropertyChecks {
 
   "Conversion to angstroms" must "be invertable" in {
     forAll { (a: WavelengthInÅngström) =>
-      Wavelength.fromAngstroms(a.value) shouldEqual Some(a)
-    }
-  }
-
-  "Construction from an arbitrary Int" must "not allow negative values" in {
-    forAll { (n: Int) =>
-      Wavelength.fromAngstroms(n).isDefined shouldEqual n >= 0
+      Wavelength.fromAngstroms(a.value) shouldEqual a
     }
   }
 

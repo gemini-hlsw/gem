@@ -3,6 +3,10 @@
 
 package gem
 
+import libra.si.MetricUnit
+import libra.QuantityOf
+import spire.math.UInt
+
 /** Mathematical data types for general use, not specific to the Gem model. */
 package object math {
 
@@ -12,12 +16,10 @@ package object math {
   type Dec = Declination
   val  Dec:  Declination.type = Declination
 
-  import libra.si._
-
   type Wavelength
 
   type Ångström = MetricUnit[1, Wavelength]
 
-  type WavelengthInÅngström = libra.QuantityOf[Int, Wavelength, Ångström]
+  type WavelengthInÅngström = QuantityOf[UInt, Wavelength, Ångström]
 
 }

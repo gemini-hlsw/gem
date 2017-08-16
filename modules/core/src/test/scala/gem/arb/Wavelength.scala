@@ -8,10 +8,12 @@ import gem.math.{ Wavelength, WavelengthInÅngström }
 import org.scalacheck._
 import org.scalacheck.Gen._
 
+import spire.math.UInt
+
 trait ArbWavelength {
 
   implicit def arbWavelengthInÅngström: Arbitrary[WavelengthInÅngström] =
-    Arbitrary(choose(0, Int.MaxValue).map(Wavelength.unsafeFromAngstroms(_)))
+    Arbitrary(choose(0, Int.MaxValue).map(i => Wavelength.fromAngstroms(UInt(i))))
 
 }
 

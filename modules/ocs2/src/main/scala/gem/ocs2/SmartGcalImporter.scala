@@ -14,6 +14,7 @@ import gem.math.{ Wavelength, WavelengthInÅngström }
 import java.io.File
 import java.time.Duration
 import doobie.imports._
+import spire.math.UInt
 
 import scala.reflect.runtime.universe._
 import scalaz._
@@ -143,7 +144,7 @@ object SmartGcalImporter extends TaskApp with DoobieClient {
 
   def parseMaxWavelengthInÅngström(s: String): WavelengthInÅngström =
     s match {
-      case "MAX" => Wavelength.unsafeFromAngstroms(Int.MaxValue)
+      case "MAX" => Wavelength.fromAngstroms(UInt.MaxValue)
       case _     => s.parseAs(Parsers.angstroms)
     }
 

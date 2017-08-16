@@ -6,11 +6,13 @@ package gem
 import gem.enum.GcalArc
 import gem.config.GcalConfig.GcalArcs
 import gem.config.GmosConfig
-import gem.math.{ Angle, Offset, Wavelength, WavelengthInÅngström }
+import gem.math.{ Angle, Offset, QuantityOfFromUInt }
 
 import java.time.Duration
 import argonaut._, Argonaut._, ArgonautShapeless._
 import scalaz.{ ISet, OneAnd, Order }
+import libra.{ QuantityOf, Unit }
+import spire.math.UInt
 
 // These json codecs are provided for primitive types that have no natural mapping that would
 // otherwise be inferred via argonaut-shapeless. For now we'll treat the JSON format as an
@@ -26,9 +28,9 @@ package object json {
         b => Angle.fromMicroarcseconds(b.underlying.movePointLeft(6).longValue))(
         a => BigDecimal(new java.math.BigDecimal(a.toMicroarcseconds).movePointRight(6)))
 
-  // WavelengthInÅngström mapping to integral Angstroms.
-  implicit val WavelengthInÅngströmCodec: CodecJson[WavelengthInÅngström] =
-    CodecJson.derived[Int].xmap(Wavelength.unsafeFromAngstroms)(_.value)
+  // Generic QuantityOf codec
+  implicit def QuantityOfCodec[A, B <: Unit[A]](implicit F: QuantityOfFromUInt[A, B]): CodecJson[QuantityOf[UInt, A, B]] =
+    CodecJson.derived[Int].xmap(i => F.fromUInt(UInt(i)))(_.value.toInt)
 
   implicit val durationCodec: CodecJson[Duration] =
     CodecJson(

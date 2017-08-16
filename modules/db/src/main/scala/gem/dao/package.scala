@@ -7,7 +7,10 @@ import doobie.postgres.imports._
 import doobie.imports._
 import doobie.enum.jdbctype.{ Distinct => JdbcDistinct, Array => _, _ }
 
-import gem.math.{ Angle, Offset, Wavelength, WavelengthInÅngström }
+// import libra.{ QuantityOf, Unit }
+import spire.math.UInt
+
+import gem.math.{ Angle, Offset, /*QuantityOfFromUInt, */Wavelength, WavelengthInÅngström }
 
 import java.sql.Timestamp
 import java.time.{Duration, Instant}
@@ -95,7 +98,11 @@ package object dao extends MoreTupleOps {
 
   // Wavelength maps to an integer in angstroms
   implicit val WavelengthMeta: Meta[WavelengthInÅngström] =
-    Meta[Int].xmap(Wavelength.unsafeFromAngstroms, _.value)
+    Meta[Int].xmap(i => Wavelength.fromAngstroms(UInt(i)), _.value.toInt)
+
+  // Wanted to do a generic quantity Meta but there is a bug with missing TypeTag
+  // implicit def QuantityOfMeta[A, B <: Unit[A]](implicit F: QuantityOfFromUInt[A, B]): Meta[QuantityOf[UInt, A, B]] =
+  //   Meta[Int].xmap(i => F.fromUInt(UInt(i)), _.value.toInt)
 
   // Program.Id as string
   implicit val ProgramIdMeta: Meta[Program.Id] =

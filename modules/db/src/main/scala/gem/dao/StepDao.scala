@@ -10,6 +10,7 @@ import gem.config.GcalConfig.GcalLamp
 import gem.enum._
 import gem.math.{ Offset, Wavelength }
 import doobie.imports._
+import spire.math.UInt
 
 import java.time.Duration
 
@@ -387,15 +388,14 @@ object StepDao {
       final case class GmosGratingBuilder[D](
                          disperser: Option[D],
                          disperserOrder: Option[GmosDisperserOrder],
-                         wavelength: Option[Int]) {
-
+                         wavelength: Option[UInt]) {
 
         def toGrating: Option[GmosGrating[D]] =
           for {
             d <- disperser
             o <- disperserOrder
-            w <- wavelength.flatMap(Wavelength.fromAngstroms)
-          } yield GmosGrating(d, o, w)
+            w <- wavelength
+          } yield GmosGrating(d, o, Wavelength.fromAngstroms(w))
       }
 
       final case class GmosFpuBuilder[U](
