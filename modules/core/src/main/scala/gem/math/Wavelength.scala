@@ -10,18 +10,9 @@ import libra._
 
 object Wavelength {
   implicit final class BaseQuantityOps[A](val a: A) extends AnyVal {
-
+    /** Syntax to create a quantity using the Å symbol */
     def Å: QuantityOf[A, Wavelength, Ångström] = Quantity(a)
   }
-
-  implicit val WavelengthInÅngströmOfUint: QuantityOfFromUInt[Wavelength, Ångström] = new QuantityOfFromUInt[Wavelength, Ångström] {
-    def fromUInt(v: UInt): QuantityOf[UInt, Wavelength, Ångström] =
-      fromAngstroms(v)
-  }
-
-  final lazy val ZeroÅngström: WavelengthInÅngström = ui"0".Å
-  final lazy val MinWavelengthInÅngström = ZeroÅngström
-  final lazy val MaxWavelengthInÅngström = UInt.MaxValue.Å
 
   /** Construct a WavelengthInÅngström from unsigned integer angstroms. */
   def fromAngstroms(angstroms: UInt): WavelengthInÅngström =
@@ -30,9 +21,17 @@ object Wavelength {
 }
 
 object WavelengthInÅngström {
-  // Generic scalaz order out of spire order
-  implicit def scalazOrder[A](implicit ordering: spire.algebra.Order[A]): Order[A] =
-    Order.fromScalaOrdering(spire.compat.ordering)
+  import Wavelength._
+
+  final lazy val ZeroÅngström: WavelengthInÅngström = ui"0".Å
+  final lazy val MinWavelengthInÅngström: WavelengthInÅngström = ZeroÅngström
+  final lazy val MaxWavelengthInÅngström: WavelengthInÅngström = UInt.MaxValue.Å
+
+  /** @group Typeclass Instances */
+  implicit val WavelengthInÅngströmOfUint: QuantityOfFromUInt[Wavelength, Ångström] = new QuantityOfFromUInt[Wavelength, Ångström] {
+    def fromUInt(v: UInt): WavelengthInÅngström =
+      fromAngstroms(v)
+  }
 
   /** @group Typeclass Instances */
   implicit val WavelengthShow: Show[WavelengthInÅngström] =

@@ -7,6 +7,10 @@ package math
 import libra.{ QuantityOf, Unit }
 import spire.math.UInt
 
+/**
+ * Typeclass that can create a Quantity from a UInt
+ * Useful to create generic encoders
+ */
 trait QuantityOfFromUInt[A, B <: Unit[A]] {
   def fromUInt(v: UInt): QuantityOf[UInt, A, B]
 }

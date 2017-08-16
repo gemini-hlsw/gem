@@ -8,7 +8,8 @@ import gem.SmartGcal._
 import gem.config._
 import gem.config.DynamicConfig.{ SmartGcalKey, SmartGcalSearchKey }
 import gem.enum._
-import gem.math.{ Wavelength, WavelengthInÅngström }
+import gem.math.WavelengthInÅngström
+import gem.math.WavelengthInÅngström._
 import doobie.imports._
 
 import scalaz._
@@ -250,8 +251,8 @@ object SmartGcalDao {
                 AND x_binning       = ${k.xBinning}
                 AND y_binning       = ${k.yBinning}
                 AND amp_gain        = ${k.ampGain}
-                AND min_wavelength <= ${w.getOrElse(Wavelength.MaxWavelengthInÅngström).value}
-                AND max_wavelength >  ${w.getOrElse(Wavelength.MinWavelengthInÅngström).value}
+                AND min_wavelength <= ${w.getOrElse(MaxWavelengthInÅngström).value}
+                AND max_wavelength >  ${w.getOrElse(MinWavelengthInÅngström).value}
          """
 
     def lampFragment(l: GcalLampType): Fragment =

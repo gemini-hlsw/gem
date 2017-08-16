@@ -85,7 +85,7 @@ object SmartGcalImporter extends TaskApp with DoobieClient {
     val c = SmartGcalKey.GmosCommon(d, f, u, x, y, a)
 
     val wmin = wavelengthMinS.parseAs(Parsers.angstroms)
-    val wmax = parseMaxWavelengthInÅngström(wavelengthMaxS)
+    val wmax = parseMaxWavelength(wavelengthMaxS)
 
     (SmartGcalKey.GmosDefinition(c, (wmin, wmax)), gcal)
   }
@@ -106,7 +106,7 @@ object SmartGcalImporter extends TaskApp with DoobieClient {
     val c = SmartGcalKey.GmosCommon(d, f, u, x, y, a)
 
     val wmin = wavelengthMinS.parseAs(Parsers.angstroms)
-    val wmax = parseMaxWavelengthInÅngström(wavelengthMaxS)
+    val wmax = parseMaxWavelength(wavelengthMaxS)
 
     (SmartGcalKey.GmosDefinition(c, (wmin, wmax)), gcal)
   }
@@ -142,7 +142,7 @@ object SmartGcalImporter extends TaskApp with DoobieClient {
   val clean: ConnectionIO[Unit] =
     sql"TRUNCATE gcal CASCADE".update.run.void
 
-  def parseMaxWavelengthInÅngström(s: String): WavelengthInÅngström =
+  def parseMaxWavelength(s: String): WavelengthInÅngström =
     s match {
       case "MAX" => Wavelength.fromAngstroms(UInt.MaxValue)
       case _     => s.parseAs(Parsers.angstroms)

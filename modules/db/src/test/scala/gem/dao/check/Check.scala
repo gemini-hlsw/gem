@@ -8,7 +8,8 @@ import gem._
 import gem.enum._
 import gem.config._
 import gem.config.DynamicConfig.SmartGcalKey
-import gem.math.{ Offset, Wavelength }
+import gem.math.Offset
+import gem.math.WavelengthInÅngström.ZeroÅngström
 
 import doobie.imports._
 import doobie.scalatest.imports._
@@ -76,7 +77,7 @@ trait Check extends FlatSpec with Matchers with IOLiteChecker {
       val sk = DynamicConfig.GmosNorth.Default.key
       SmartGcalKey.GmosDefinition(
         sk.gmos,
-        (Wavelength.ZeroÅngström, Wavelength.ZeroÅngström)
+        (ZeroÅngström, ZeroÅngström)
       )
     }
 
@@ -84,7 +85,7 @@ trait Check extends FlatSpec with Matchers with IOLiteChecker {
       val sk = DynamicConfig.GmosSouth.Default.key
       SmartGcalKey.GmosDefinition(
         sk.gmos,
-        (Wavelength.ZeroÅngström, Wavelength.ZeroÅngström)
+        (ZeroÅngström, ZeroÅngström)
       )
     }
   }
