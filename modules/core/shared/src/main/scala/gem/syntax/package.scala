@@ -9,5 +9,7 @@ package gem
  * conversions traits.
  */
 package object syntax {
-  object all extends ToParserOps
+  object all
+    extends ToParserOps
+       with ToLiteralOps
 }
