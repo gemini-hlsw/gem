@@ -20,6 +20,7 @@ lazy val scalaXmlVerson      = "1.0.6"
 lazy val shapelessVersion    = "2.3.2"
 lazy val slf4jVersion        = "1.7.25"
 lazy val tucoVersion         = "0.3.0-M2"
+lazy val contextualVersion   = "1.0.1"
 
 enablePlugins(GitVersioning)
 
@@ -184,7 +185,8 @@ lazy val core = crossProject
       "org.typelevel"           %%% "cats-testkit" % catsVersion % "test",
       "com.chuusai"             %%% "shapeless"    % shapelessVersion,
       "org.tpolecat"            %%% "atto-core"    % attoVersion,
-      "com.github.benhutchison" %%% "mouse"        % mouseVersion
+      "com.github.benhutchison" %%% "mouse"        % mouseVersion,
+      "com.propensive"          %%% "contextual"   % contextualVersion
     )
   )
   .jsSettings(
