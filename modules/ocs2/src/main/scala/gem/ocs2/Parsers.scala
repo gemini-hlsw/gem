@@ -4,10 +4,10 @@
 package gem.ocs2
 
 import cats.implicits._
-import gem.{Dataset, Observation, Program}
+import gem.{ Dataset, Observation, Program }
 import gem.enum._
 import gem.config.GcalConfig.GcalLamp
-import gem.math.{ Angle, Offset, Wavelength }
+import gem.math.{ Angle, Declination, Offset, RightAscension, Wavelength }
 
 /** String parsers for our model types.
   */
@@ -57,6 +57,15 @@ object Parsers {
     "Q"  -> MagnitudeBand.Q,
     "AP" -> MagnitudeBand.Ap
   )
+
+  val ra: PioParse[RightAscension] =
+    double.map(Angle.fromDoubleDegrees)
+          .map(_.toHourAngle)
+          .map(RightAscension.fromHourAngle)
+
+  val dec: PioParse[Declination] =
+    double.map(Angle.fromDoubleDegrees)
+          .map(Declination.unsafeFromAngle)
 
   val instrument: PioParse[Instrument] = enum(
     "AcqCam"     -> gem.enum.Instrument.AcqCam,

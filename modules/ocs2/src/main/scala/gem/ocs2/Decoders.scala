@@ -7,6 +7,7 @@ import cats.implicits._
 import gem.{Dataset, Observation, Program, Step}
 import gem.config._
 import gem.enum.{ Instrument, MagnitudeBand, MagnitudeSystem }
+import gem.math.{ Coordinates, Declination, RightAscension }
 import gem.ocs2.pio.PioPath._
 import gem.ocs2.pio.PioDecoder
 import gem.ocs2.pio.PioDecoder.fromParse
@@ -25,6 +26,20 @@ object Decoders {
 
   implicit val MagnitudeBandDecoder: PioDecoder[MagnitudeBand] =
     fromParse { Parsers.magnitudeBand }
+
+  implicit val RightAscensionDecoder: PioDecoder[RightAscension] =
+    fromParse { Parsers.ra }
+
+  implicit val DeclinationDecoder: PioDecoder[Declination] =
+    fromParse { Parsers.dec }
+
+  implicit val CoordinatesDecoder: PioDecoder[Coordinates] =
+    PioDecoder { n =>
+      for {
+        r <- (n \! "#ra" ).decode[RightAscension]
+        d <- (n \! "#dec").decode[Declination]
+      } yield Coordinates(r, d)
+    }
 
   implicit val DatasetLabelDecoder: PioDecoder[Dataset.Label] =
     fromParse { Parsers.datasetLabel }
