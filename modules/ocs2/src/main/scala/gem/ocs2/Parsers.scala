@@ -32,6 +32,32 @@ object Parsers {
   val angstroms: PioParse[Wavelength] =
     int.map(Wavelength.unsafeFromAngstroms)
 
+  val magnitudeSystem: PioParse[MagnitudeSystem] =
+    enumFromTag(MagnitudeSystem.all)
+
+  val magnitudeBand: PioParse[MagnitudeBand] = enum(
+    "u"  -> MagnitudeBand.SloanU,
+    "g"  -> MagnitudeBand.SloanG,
+    "r"  -> MagnitudeBand.SloanR,
+    "i"  -> MagnitudeBand.SloanI,
+    "z"  -> MagnitudeBand.SloanZ,
+    "U"  -> MagnitudeBand.U,
+    "B"  -> MagnitudeBand.B,
+    "V"  -> MagnitudeBand.V,
+    "UC" -> MagnitudeBand.Uc,
+    "R"  -> MagnitudeBand.R,
+    "I"  -> MagnitudeBand.I,
+    "Y"  -> MagnitudeBand.Y,
+    "J"  -> MagnitudeBand.J,
+    "H"  -> MagnitudeBand.H,
+    "K"  -> MagnitudeBand.K,
+    "L"  -> MagnitudeBand.L,
+    "M"  -> MagnitudeBand.M,
+    "N"  -> MagnitudeBand.N,
+    "Q"  -> MagnitudeBand.Q,
+    "AP" -> MagnitudeBand.Ap
+  )
+
   val instrument: PioParse[Instrument] = enum(
     "AcqCam"     -> gem.enum.Instrument.AcqCam,
     "bHROS"      -> gem.enum.Instrument.Bhros,

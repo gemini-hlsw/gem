@@ -6,7 +6,7 @@ package gem.ocs2
 import cats.implicits._
 import gem.{Dataset, Observation, Program, Step}
 import gem.config._
-import gem.enum.Instrument
+import gem.enum.{ Instrument, MagnitudeBand, MagnitudeSystem }
 import gem.ocs2.pio.PioPath._
 import gem.ocs2.pio.PioDecoder
 import gem.ocs2.pio.PioDecoder.fromParse
@@ -19,6 +19,13 @@ import scala.collection.immutable.TreeMap
 /** `PioDecoder` instances for our model types.
   */
 object Decoders {
+
+  implicit val MagnitudeSystemDecoder: PioDecoder[MagnitudeSystem] =
+    fromParse { Parsers.magnitudeSystem }
+
+  implicit val MagnitudeBandDecoder: PioDecoder[MagnitudeBand] =
+    fromParse { Parsers.magnitudeBand }
+
   implicit val DatasetLabelDecoder: PioDecoder[Dataset.Label] =
     fromParse { Parsers.datasetLabel }
 
