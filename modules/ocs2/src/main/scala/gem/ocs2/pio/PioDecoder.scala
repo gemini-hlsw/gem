@@ -48,6 +48,7 @@ object PioDecoder {
       } yield (a, b)
     }
 
+  implicit val DoubleDecoder: PioDecoder[Double]   = fromParse(PioParse.double )
   implicit val StringDecoder: PioDecoder[String]   = fromParse(PioParse.string )
   implicit val IntDecoder: PioDecoder[Int]         = fromParse(PioParse.int    )
   implicit val LongDecoder: PioDecoder[Long]       = fromParse(PioParse.long   )

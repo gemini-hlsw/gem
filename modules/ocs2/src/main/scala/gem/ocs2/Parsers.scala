@@ -7,7 +7,7 @@ import cats.implicits._
 import gem.{ Dataset, Observation, Program }
 import gem.enum._
 import gem.config.GcalConfig.GcalLamp
-import gem.math.{ Angle, Declination, Offset, RightAscension, Wavelength }
+import gem.math._
 
 /** String parsers for our model types.
   */
@@ -66,6 +66,12 @@ object Parsers {
   val dec: PioParse[Declination] =
     double.map(Angle.fromDoubleDegrees)
           .map(Declination.unsafeFromAngle)
+
+  // Anything else blows up, which is ok since we don't support anything else
+  val epoch: PioParse[Epoch] = enum(
+    "1950.0" -> Epoch.B1950,
+    "2000.0" -> Epoch.J2000
+  )
 
   val instrument: PioParse[Instrument] = enum(
     "AcqCam"     -> gem.enum.Instrument.AcqCam,

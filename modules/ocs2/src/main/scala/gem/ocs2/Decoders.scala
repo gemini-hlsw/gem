@@ -7,7 +7,7 @@ import cats.implicits._
 import gem.{Dataset, Observation, Program, Step}
 import gem.config._
 import gem.enum.{ Instrument, MagnitudeBand, MagnitudeSystem }
-import gem.math.{ Coordinates, Declination, RightAscension }
+import gem.math._
 import gem.ocs2.pio.PioPath._
 import gem.ocs2.pio.PioDecoder
 import gem.ocs2.pio.PioDecoder.fromParse
@@ -39,6 +39,31 @@ object Decoders {
         r <- (n \! "#ra" ).decode[RightAscension]
         d <- (n \! "#dec").decode[Declination]
       } yield Coordinates(r, d)
+    }
+
+  implicit val EpochDecoder: PioDecoder[Epoch] =
+    fromParse { Parsers.epoch }
+
+  implicit val ProperMotionDecoder: PioDecoder[ProperMotion] =
+    PioDecoder { n =>
+      for {
+        c  <- (n \! "&coordinates").decode[Coordinates]
+        e  <- (n \? "&proper-motion" \! "#epoch"    ).decodeOrElse[Epoch](Epoch.J2000)
+        dr <- (n \? "&proper-motion" \! "#delta-ra" ).decode[Double]
+        dd <- (n \? "&proper-motion" \! "#delta-dec").decode[Double]
+        pv  = dr.flatMap { r =>
+          dd.map { d =>
+            Offset(
+              Offset.P(Angle.fromMicroarcseconds(r.round)),
+              Offset.Q(Angle.fromMicroarcseconds(d.round))
+            )
+          }
+        }
+        dz <- (n \? "#redshift").decode[Double]
+        rv  = dz.map(RadialVelocity.fromRedshift)
+        dp <- (n \? "#parallax").decode[Double]
+        p   = dp.map(d => Angle.fromMilliarcseconds(d.round.toInt))
+      } yield ProperMotion(c, e, pv, rv, p)
     }
 
   implicit val DatasetLabelDecoder: PioDecoder[Dataset.Label] =
@@ -87,8 +112,8 @@ object Decoders {
   implicit val ProgramDecoder: PioDecoder[Program[Observation[StaticConfig, Step[DynamicConfig]]]] =
     PioDecoder { n =>
       for {
-        id <- (n \! "@name"           ).decode[Program.Id]
-        t  <- (n \! "data" \? "#title").decodeOrZero[String]
+        id <- (n \!  "@name"           ).decode[Program.Id]
+        t  <- (n \!  "data" \? "#title").decodeOrZero[String]
         is <- (n \\* "observation"    ).decode[Observation.Index]
         os <- (n \\* "observation"    ).decode[Observation[StaticConfig, Step[DynamicConfig]]]
       } yield Program(id, t, TreeMap(is.zip(os): _*))
