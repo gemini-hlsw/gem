@@ -73,6 +73,13 @@ object Parsers {
     "2000.0" -> Epoch.J2000
   )
 
+  val ephemerisKeyType: PioParse[EphemerisKeyType] = enum(
+    "asteroid"           -> EphemerisKeyType.AsteroidNew,
+    "asteroid-old-style" -> EphemerisKeyType.AsteroidOld,
+    "comet"              -> EphemerisKeyType.Comet,
+    "major-body"         -> EphemerisKeyType.MajorBody
+  )
+
   val instrument: PioParse[Instrument] = enum(
     "AcqCam"     -> gem.enum.Instrument.AcqCam,
     "bHROS"      -> gem.enum.Instrument.Bhros,

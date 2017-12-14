@@ -3,6 +3,7 @@
 
 package gem.ocs2
 
+import gem.{ EphemerisKey, Target, Track }
 import gem.math._
 import gem.ocs2.Decoders._
 import gem.ocs2.pio._
@@ -12,6 +13,7 @@ import cats.tests.CatsSuite
 
 import scala.xml._
 
+// Basic sanity checks for target decoding
 
 @SuppressWarnings(Array("org.wartremover.warts.ToString", "org.wartremover.warts.Equals", "org.wartremover.warts.OptionPartial"))
 final class TargetDecodersTest extends CatsSuite {
@@ -59,6 +61,20 @@ final class TargetDecodersTest extends CatsSuite {
       case other                             => fail(s"unexpected: $other")
     }
   }
+
+  test("Sidereal target") {
+    PioDecoder[Target].decode(SiderealNode) match {
+      case Right(actual) => assert(actual == SiderealTarget)
+      case Left(err)     => fail(err.toString)
+    }
+  }
+
+  test("Nonsidereal target") {
+    PioDecoder[Target].decode(NonsiderealNode) match {
+      case Right(actual) => assert(actual == NonsiderealTarget)
+      case Left(err)     => fail(err.toString)
+    }
+  }
 }
 
 @SuppressWarnings(Array("org.wartremover.warts.Equals", "org.wartremover.warts.OptionPartial"))
@@ -101,6 +117,22 @@ object TargetDecodersTest {
 
     ProperMotion(c, Epoch.J2000, Some(off), Some(rv), Some(px))
   }
+
+  val SiderealTarget: Target =
+    Target("Example", Track.Sidereal(SiderealProperMotion))
+
+  val NonsiderealNode: Elem =
+    <paramset name="target">
+      <param name="name" value="Oumuamua"/>
+      <paramset name="horizons-designation">
+        <param name="des" value="C/1937 P1"/>
+        <param name="tag" value="comet"/>
+      </paramset>
+      <param name="tag" value="nonsidereal"/>
+    </paramset>
+
+  val NonsiderealTarget: Target =
+    Target("Oumuamua", Track.Nonsidereal(EphemerisKey.Comet("C/1937 P1"), Map.empty))
 
   // Deletes all instances of params and paramsets that have the given name.
   private def delete(name: String, e: Elem): Elem = {
