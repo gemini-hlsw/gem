@@ -186,19 +186,33 @@ object Decoders {
 
   /** Decodes all the program's targets, regardless of where they may be found.
     */
-  implicit val TargetsDecoder: PioDecoder[List[Target]] =
+  implicit val TargetsDecoder: PioDecoder[List[Target]] = {
+
+    // (I plan for this to be temporary.  Targets will be associated with
+    // observations and read where an observation is read.)
+
+    import gem.enum.TrackType
+
+    def trackType(targetNode: scala.xml.Node): Option[TrackType] =
+      (targetNode \? "#tag").decode[String].toOption.flatten.collect {
+        case "sidereal"    => TrackType.Sidereal: TrackType
+        case "nonsidereal" => TrackType.Nonsidereal: TrackType
+      }
+
     PioDecoder { n =>
       val listing = (n \\* "&target")
 
-      // filter out "too" for now
+      // filter out "too" and empty non-sidereal (that is, w/o horizons id) for now
       val targets = listing.copy(node = listing.node.map { ns =>
-        ns.filterNot { n =>
-          (n \ "param").exists { p =>
-            (p \ "@name").text === "tag" && (p \ "@value").text === "too"
+        ns.filter { n =>
+          trackType(n).fold(false) {
+            case TrackType.Sidereal    => true
+            case TrackType.Nonsidereal => (n \? "&horizons-designation").node.isDefined.getOrElse(false)
           }
         }
       })
 
       targets.decode[Target]
     }
+  }
 }
