@@ -179,8 +179,26 @@ object Decoders {
       for {
         id <- (n \!  "@name"           ).decode[Program.Id]
         t  <- (n \!  "data" \? "#title").decodeOrZero[String]
-        is <- (n \\* "observation"    ).decode[Observation.Index]
-        os <- (n \\* "observation"    ).decode[Observation[StaticConfig, Step[DynamicConfig]]]
+        is <- (n \\* "observation"     ).decode[Observation.Index]
+        os <- (n \\* "observation"     ).decode[Observation[StaticConfig, Step[DynamicConfig]]]
       } yield Program(id, t, TreeMap(is.zip(os): _*))
+    }
+
+  /** Decodes all the program's targets, regardless of where they may be found.
+    */
+  implicit val TargetsDecoder: PioDecoder[List[Target]] =
+    PioDecoder { n =>
+      val listing = (n \\* "&target")
+
+      // filter out "too" for now
+      val targets = listing.copy(node = listing.node.map { ns =>
+        ns.filterNot { n =>
+          (n \ "param").exists { p =>
+            (p \ "@name").text === "tag" && (p \ "@value").text === "too"
+          }
+        }
+      })
+
+      targets.decode[Target]
     }
 }
