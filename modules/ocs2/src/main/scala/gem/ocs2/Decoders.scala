@@ -75,24 +75,21 @@ object Decoders {
     fromParse { Parsers.ephemerisKeyType }
 
   implicit val EphemerisKeyDecoder: PioDecoder[EphemerisKey] = {
-    import gem.enum.{ EphemerisKeyType => KeyType }
-    import gem.{ EphemerisKey => Key }
-
-      def fromDes(des: String, tag: KeyType): Either[PioError, Key] =
+      def fromDes(des: String, tag: EphemerisKeyType): Either[PioError, EphemerisKey] =
         tag match {
-          case KeyType.AsteroidNew  =>
-            Right(Key.AsteroidNew(des))
+          case EphemerisKeyType.AsteroidNew  =>
+            Right(EphemerisKey.AsteroidNew(des))
 
-          case KeyType.AsteroidOld  =>
-            des.parseIntOption.toRight(PioError.ParseError(des, "AsteroidOld")).map(Key.AsteroidOld(_))
+          case EphemerisKeyType.AsteroidOld  =>
+            des.parseIntOption.toRight(PioError.ParseError(des, "AsteroidOld")).map(EphemerisKey.AsteroidOld(_))
 
-          case KeyType.Comet        =>
-            Right(Key.Comet(des))
+          case EphemerisKeyType.Comet        =>
+            Right(EphemerisKey.Comet(des))
 
-          case KeyType.MajorBody    =>
-            des.parseIntOption.toRight(PioError.ParseError(des, "MajorBody")).map(Key.MajorBody(_))
+          case EphemerisKeyType.MajorBody    =>
+            des.parseIntOption.toRight(PioError.ParseError(des, "MajorBody")).map(EphemerisKey.MajorBody(_))
 
-          case KeyType.UserSupplied =>
+          case EphemerisKeyType.UserSupplied =>
             Left(ParseError(des, "EphemerisKey"))
         }
 
