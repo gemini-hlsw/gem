@@ -107,8 +107,8 @@ object TargetDecodersTest {
     val c   = Coordinates(ra, dec)
 
     val off = Offset(
-                Offset.P(Angle.fromMicroarcseconds(2L)),
-                Offset.Q(Angle.fromMicroarcseconds(3L))
+                Offset.P(Angle.fromMilliarcseconds(2)),
+                Offset.Q(Angle.fromMilliarcseconds(3))
               )
 
     val rv  = RadialVelocity.fromRedshift(4.0)

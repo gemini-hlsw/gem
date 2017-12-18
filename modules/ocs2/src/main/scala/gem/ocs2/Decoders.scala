@@ -56,15 +56,15 @@ object Decoders {
         pv  = dr.flatMap { r =>
           dd.map { d =>
             Offset(
-              Offset.P(Angle.fromMicroarcseconds(r.round)),
-              Offset.Q(Angle.fromMicroarcseconds(d.round))
+              Offset.P(Angle.fromMicroarcseconds((r * 1000).round)),
+              Offset.Q(Angle.fromMicroarcseconds((d * 1000).round))
             )
           }
         }
         dz <- (n \? "#redshift").decode[Double]
         rv  = dz.map(RadialVelocity.fromRedshift)
         dp <- (n \? "#parallax").decode[Double]
-        p   = dp.map(d => Angle.fromMilliarcseconds(d.round.toInt))
+        p   = dp.map(d => Angle.fromMicroarcseconds((d * 1000).round))
       } yield ProperMotion(c, e, pv, rv, p)
     }
 
