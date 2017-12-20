@@ -10,6 +10,8 @@ class UserTargetCheck extends Check {
   import UserTargetDao.Statements._
 
   "UserTargetDao.Statements" should
-            "insert" in check(insert(0, Other, Dummy.observationId))
+            "insert"    in check(insert(0, Other, Dummy.observationId))
+  it should "select"    in check(select(0))
+  it should "selectAll" in check(selectAll(Dummy.observationId))
 
 }

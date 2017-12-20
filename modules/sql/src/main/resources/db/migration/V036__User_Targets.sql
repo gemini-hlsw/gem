@@ -29,7 +29,7 @@ Other	Other	Other	f
 -- Associates a target, user target type, and an observation.
 
 CREATE TABLE user_target (
-  user_target_id   SERIAL                PRIMARY KEY,
+  id               SERIAL                PRIMARY KEY,
   target_id        integer               NOT NULL REFERENCES target(id),
   user_target_type identifier            NOT NULL REFERENCES e_user_target_type(id),
   observation_id   character varying(40) NOT NULL REFERENCES observation ON DELETE CASCADE
