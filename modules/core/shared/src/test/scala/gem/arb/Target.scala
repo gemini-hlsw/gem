@@ -14,7 +14,7 @@ trait ArbTarget {
   implicit val arbTarget: Arbitrary[Target] =
     Arbitrary {
       for {
-        n <- Gen.alphaStr
+        n <- Gen.alphaStr.map(_.take(64))
         t <- arbitrary[Track]
       } yield Target(n, t)
     }

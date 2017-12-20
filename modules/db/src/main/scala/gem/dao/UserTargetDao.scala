@@ -27,7 +27,7 @@ object UserTargetDao {
   def insert(userTarget: UserTarget, oid: Observation.Id): ConnectionIO[Int] =
     for {
       tid <- TargetDao.insert(userTarget.target)
-      uid <- Statements.insert(tid, userTarget.targetType, oid).withUniqueGeneratedKeys[Int]("user_target_id")
+      uid <- Statements.insert(tid, userTarget.targetType, oid).withUniqueGeneratedKeys[Int]("id")
     } yield uid
 
   def select(id: Int): ConnectionIO[Option[UserTarget]] =
