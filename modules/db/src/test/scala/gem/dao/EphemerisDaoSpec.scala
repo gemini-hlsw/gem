@@ -238,6 +238,25 @@ class EphemerisDaoSpec extends PropSpec with PropertyChecks with DaoTest {
     }
 
   }
+
+  property("EphemerisDao should select all keys") {
+    forAll { (head: (KS, EphemerisMeta), tail: List[(KS, EphemerisMeta)], i: Int) =>
+
+      val env = EphemerisMetaTestEnv(head, tail, i)
+
+      // The keys we expect to select from the database.
+      val expectedKeys = (head :: tail).collect {
+        case (KS(k, s), _) if s == env.site => k
+      }.toSet
+
+      val selectKeys = EphemerisDao.selectKeys(env.site)
+
+      // Run the test
+      val res = (env.insertAll *> selectKeys).transact(xa).unsafeRunSync
+
+      res shouldEqual expectedKeys
+    }
+  }
 }
 
 @SuppressWarnings(Array("org.wartremover.warts.Equals"))

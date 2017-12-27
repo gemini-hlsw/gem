@@ -22,4 +22,6 @@ class EphemerisCheck extends Check {
   it should "selectMeta"  in check(selectMeta(Dummy.ephemerisKey, Dummy.site))
 
   it should "selectTimes" in check(selectTimes(Dummy.ephemerisKey, Dummy.site))
+
+  it should "selectKeys"  in check(selectKeys(Dummy.site))
 }
