@@ -19,6 +19,9 @@ trait ArbJulianDate {
     Arbitrary {
       arbitrary[LocalDateTime].map(JulianDate.ofLocalDateTime)
     }
+
+  implicit val cogJulianDate: Cogen[JulianDate] =
+    Cogen[(Int, Long)].contramap(jd => (jd.dayNumber, jd.nanoAdjustment))
 }
 
 object ArbJulianDate extends ArbJulianDate

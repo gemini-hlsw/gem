@@ -3,8 +3,10 @@
 
 package gem.math
 
-import cats.tests.CatsSuite
 import cats.{ Eq, Show }
+import cats.kernel.laws.discipline._
+import cats.tests.CatsSuite
+
 import gem.arb._
 
 import java.time.LocalDateTime
@@ -15,6 +17,9 @@ final class JulianDateSpec extends CatsSuite {
 
   import ArbJulianDate._
   import ArbTime._
+
+  // Laws
+  checkAll("JulianDate", OrderTests[JulianDate].order)
 
   test("JulianDate.eq.natural") {
     forAll { (a: JulianDate, b: JulianDate) =>
@@ -55,6 +60,7 @@ final class JulianDateSpec extends CatsSuite {
 
   test("Some specific dates compared to USNO calculations") {
 
+    // See http://aa.usno.navy.mil/data/docs/JulianDate.php
     val tests = List(
       (LocalDateTime.of(1918, 11, 11, 11,  0,  0), 2421908.958333),
       (LocalDateTime.of(1969,  7, 21,  2, 56, 15), 2440423.622396),

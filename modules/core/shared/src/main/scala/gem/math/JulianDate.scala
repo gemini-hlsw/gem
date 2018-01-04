@@ -3,7 +3,8 @@
 
 package gem.math
 
-import cats.{Eq, Show}
+import cats.{ Order, Show }
+import cats.implicits._
 
 import java.time.{Instant, LocalDateTime}
 import java.time.ZoneOffset.UTC
@@ -62,6 +63,11 @@ object JulianDate {
     val m   = ldt.getMonthValue
     val d   = ldt.getDayOfMonth
 
+    // Julian Day Number algorithm from:
+    // Fliegel, H.F. and Van Flandern, T.C. (1968). "A Machine Algorithm for
+    // Processing Calendar Dates" Communications of the Association of Computing
+    // Machines ll, 6sT.
+
     // Yes, integer division.  -1 for Jan and Feb. 0 for Mar - Dec.
     val t   = (m - 14) / 12
 
@@ -78,8 +84,8 @@ object JulianDate {
     new JulianDate(jdn, adj) {}
   }
 
-  implicit val JulianDateEq: Eq[JulianDate] =
-    Eq.fromUniversalEquals
+  implicit val JulianDateOrder: Order[JulianDate] =
+    Order.by(jd => (jd.dayNumber, jd.nanoAdjustment))
 
   implicit val JulianDateShow: Show[JulianDate] =
     Show.fromToString
