@@ -5,7 +5,7 @@ package gem.horizons.tcs
 
 import gem.math.{ Angle, Declination, Ephemeris, HourAngle, JulianDate, RightAscension }
 
-import cats.effect.IO
+import cats._
 
 import fs2._
 
@@ -90,9 +90,9 @@ object TcsFormat {
     s" $timeS $jdS     $coordS $ΔraS $ΔdecS"
   }
 
-  val elements: Pipe[IO, Ephemeris.Element, String] =
+  def elements[M[_]: Monad]: Pipe[M, Ephemeris.Element, String] =
     _.map(formatElement)
 
-  val ephemeris: Pipe[IO, Ephemeris.Element, String] =
+  def ephemeris[M[_]: Monad]: Pipe[M, Ephemeris.Element, String] =
     s => Stream(Header, Soe) ++ s.map(formatElement) ++ Stream(Eoe)
 }

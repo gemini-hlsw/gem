@@ -26,7 +26,7 @@ import java.time.Instant
   *
   * @param xa transactor to use for working with the database
   */
-final class TcsEphemerisExport(xa: Transactor[IO]) {
+final class TcsEphemerisExport[M[_]: Sync](xa: Transactor[M]) {
   import TcsEphemerisExport.RowLimit
 
   /** Exports up to `RowLimit` lines of ephemeris data associated with the given
@@ -47,7 +47,7 @@ final class TcsEphemerisExport(xa: Transactor[IO]) {
     *              exactly this time it will be the last element (otherwise,
     *              the element immediately following this time is included)
     */
-  def exportOne(path: Path, key: EphemerisKey, site: Site, start: Instant, end: Instant): IO[Unit] = {
+  def exportOne(path: Path, key: EphemerisKey, site: Site, start: Instant, end: Instant): M[Unit] = {
     def query(s: InstantMicros, e: InstantMicros) =
       EphemerisDao
         .streamRange(key, site, s, e)
@@ -78,7 +78,7 @@ final class TcsEphemerisExport(xa: Transactor[IO]) {
     * @param start start time for the ephemeris data, inclusive
     * @param end   end time for the ephemeirs day, exclusive
     */
-  def exportAll(dir: Path, site: Site, start: Instant, end: Instant): IO[Unit] = {
+  def exportAll(dir: Path, site: Site, start: Instant, end: Instant): M[Unit] = {
     def name(k: EphemerisKey): String =
       s"${k.format}.eph"
 
