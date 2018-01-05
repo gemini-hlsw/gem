@@ -26,7 +26,7 @@ import java.time.Instant
   *
   * @param xa transactor to use for working with the database
   */
-final class TcsEphemerisExport[M[_]: Sync](xa: Transactor[M]) {
+final class TcsEphemerisExport[M[_]: Effect](xa: Transactor[M]) {
   import TcsEphemerisExport.RowLimit
 
   /** Exports up to `RowLimit` lines of ephemeris data associated with the given
