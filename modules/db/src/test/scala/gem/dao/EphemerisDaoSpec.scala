@@ -229,6 +229,22 @@ class EphemerisDaoSpec extends PropSpec with PropertyChecks with DaoTest {
     }
   }
 
+  property("EphemerisDao bracketRange") {
+    forAll { (ks: KS, e: Ephemeris, m: EphemerisMap) =>
+      import InstantMicros.{ Max, Min }
+
+      val em = e.toMap
+
+      val ((qMin, qMax), (eMin, eMax)) =
+        if (em.isEmpty) ((Min, Max), (Min, Max))
+        else ((em.firstKey.plusMicros(1L), em.lastKey.plusMicros(-1L)), (em.firstKey, em.lastKey))
+
+      val p = EphemerisDao.bracketRange(ks.key, ks.site, qMin, qMax)
+
+      (eMin, eMax) shouldEqual execTest(m + (ks -> e), p)
+    }
+  }
+
   property("EphemerisDao should select None times if no matching ephemeris") {
     forAll { (ks: KS, m: EphemerisMap) =>
 
