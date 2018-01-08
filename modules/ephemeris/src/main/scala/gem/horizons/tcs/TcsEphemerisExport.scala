@@ -48,25 +48,21 @@ final class TcsEphemerisExport[M[_]: Effect](xa: Transactor[M]) {
     *              the element immediately following this time is included)
     */
   def exportOne(path: Path, key: EphemerisKey, site: Site, start: Instant, end: Instant): M[Unit] = {
-    def query(s: InstantMicros, e: InstantMicros) =
-      EphemerisDao
-        .streamRange(key, site, s, e)
-        .transact(xa)
-        .take(RowLimit.toLong)
-        .through(TcsFormat.ephemeris)
-        .intersperse("\n")
-        .append(Stream.emit("\n"))
-        .through(text.utf8Encode)
-        .to(file.writeAll(path, List(CREATE, TRUNCATE_EXISTING)))
-        .run
-
     val s = InstantMicros.truncate(start)
     val e = InstantMicros.truncate(end)
 
-    for {
-      r <- EphemerisDao.bracketRange(key, site, s, e).transact(xa)
-      _ <- query(r._1, r._2)
-    } yield ()
+    import EphemerisDao.{ bracketRange, streamRange }
+
+    Stream.eval(bracketRange(key, site, s, e))
+      .flatMap { case (s, e) => streamRange(key, site, s, e) }
+      .transact(xa)
+      .take(RowLimit.toLong)
+      .through(TcsFormat.ephemeris)
+      .intersperse("\n")
+      .append(Stream.emit("\n"))
+      .through(text.utf8Encode)
+      .to(file.writeAll(path, List(CREATE, TRUNCATE_EXISTING)))
+      .run
   }
 
   /** Exports all ephemerides for the given site for the given time period. File
