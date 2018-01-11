@@ -5,7 +5,7 @@ package gem
 
 import gem.enum.Site
 import gem.math._
-import gem.util.InstantMicros
+import gem.util.Timestamp
 import java.time.Instant
 
 /**
@@ -42,7 +42,7 @@ object Track {
 
     override def at(time: Instant, s: Site): Option[Coordinates] =
       for {
-        i <- InstantMicros.clip(time)
+        i <- Timestamp.fromInstant(time)
         e <- ephemeris(s)
         c <- e.get(i)
       } yield c.coord

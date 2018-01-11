@@ -11,13 +11,13 @@ import cats.tests.CatsSuite
 
 
 @SuppressWarnings(Array("org.wartremover.warts.Equals", "org.wartremover.warts.NonUnitStatements"))
-final class InstantMicrosSpec extends CatsSuite {
+final class TimestampSpec extends CatsSuite {
 
   // Laws
-  checkAll("InstantMicro", OrderTests[InstantMicros].order)
+  checkAll("Timestamp", OrderTests[Timestamp].order)
 
   test("Construction should truncate Instant nanoseconds to microseconds") {
-    forAll { (i: InstantMicros) =>
+    forAll { (i: Timestamp) =>
       i.toInstant.getNano % 1000L == 0
     }
   }

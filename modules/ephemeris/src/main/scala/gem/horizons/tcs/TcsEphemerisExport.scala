@@ -6,7 +6,7 @@ package gem.horizons.tcs
 import gem.EphemerisKey
 import gem.dao.EphemerisDao
 import gem.enum.Site
-import gem.util.InstantMicros
+import gem.util.Timestamp
 
 import cats.effect._
 import cats.implicits._
@@ -46,7 +46,7 @@ final class TcsEphemerisExport[M[_]: Effect](xa: Transactor[M]) {
     *              exactly this time it will be the last element (otherwise,
     *              the element immediately following this time is included)
     */
-  def exportOne(path: Path, key: EphemerisKey, site: Site, start: InstantMicros, end: InstantMicros): M[Unit] = {
+  def exportOne(path: Path, key: EphemerisKey, site: Site, start: Timestamp, end: Timestamp): M[Unit] = {
     import EphemerisDao.{ bracketRange, streamRange }
 
     Stream.eval(bracketRange(key, site, start, end))
@@ -71,7 +71,7 @@ final class TcsEphemerisExport[M[_]: Effect](xa: Transactor[M]) {
     * @param start start time for the ephemeris data, inclusive
     * @param end   end time for the ephemeirs day, exclusive
     */
-  def exportAll(dir: Path, site: Site, start: InstantMicros, end: InstantMicros): M[Unit] = {
+  def exportAll(dir: Path, site: Site, start: Timestamp, end: Timestamp): M[Unit] = {
     def name(k: EphemerisKey): String =
       s"${k.format}.eph"
 

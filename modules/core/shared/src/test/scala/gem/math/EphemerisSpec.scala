@@ -4,7 +4,7 @@
 package gem.math
 
 import gem.arb._
-import gem.util.InstantMicros
+import gem.util.Timestamp
 
 import cats.Eq
 import cats.kernel.laws.discipline._
@@ -33,8 +33,8 @@ final class EphemerisSpec extends CatsSuite {
   }
 
   test("Ephemeris.get.interpolated") {
-    forAll { (t1: InstantMicros, c1: EphemerisCoordinates, c2: EphemerisCoordinates, n: Int) =>
-      val tEnd = t1.plusSeconds(100).getOrElse(InstantMicros.Max)
+    forAll { (t1: Timestamp, c1: EphemerisCoordinates, c2: EphemerisCoordinates, n: Int) =>
+      val tEnd = t1.plusSeconds(100).getOrElse(Timestamp.Max)
       val tBeg = tEnd.plusSeconds(-100).get
       val off  = (n % 100).abs
       val tMid = tBeg.plusSeconds(off.toLong).get

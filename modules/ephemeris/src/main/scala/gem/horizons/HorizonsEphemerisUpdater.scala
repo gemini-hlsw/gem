@@ -8,7 +8,7 @@ package horizons
 import gem.dao.EphemerisDao
 import gem.enum.Site
 import gem.math.Ephemeris
-import gem.util.InstantMicros
+import gem.util.Timestamp
 import gem.horizons.EphemerisCompression._
 
 import cats._
@@ -63,7 +63,7 @@ final case class HorizonsEphemerisUpdater(
 
     for {
 
-      time <- InstantMicros.now
+      time <- Timestamp.now
       sem  <- Semester.current(site)
       ctx  <- context(key, site)
       _    <- updateIfNecessary(ctx, time, sem).transact(xa)
@@ -96,9 +96,9 @@ final case class HorizonsEphemerisUpdater(
 
 
   private def updateIfNecessary(
-    ctx:  Context,
-    time: InstantMicros,
-    sem:  Semester
+                                 ctx:  Context,
+                                 time: Timestamp,
+                                 sem:  Semester
   ): ConnectionIO[Unit] =
 
     if (ctx.isUpToDateFor(sem)) recordUpdateCheck(ctx, time)
@@ -107,7 +107,7 @@ final case class HorizonsEphemerisUpdater(
 
   private def recordUpdateCheck(
     ctx:  Context,
-    time: InstantMicros
+    time: Timestamp
   ): ConnectionIO[Unit] =
 
     for {
@@ -119,9 +119,9 @@ final case class HorizonsEphemerisUpdater(
 
 
   private def doUpdate(
-    ctx:  Context,
-    time: InstantMicros,
-    sem:  Semester
+                        ctx:  Context,
+                        time: Timestamp,
+                        sem:  Semester
   ): ConnectionIO[Unit] = {
 
     // Need to update both meta and ephemeris.  First the new
@@ -170,11 +170,11 @@ object HorizonsEphemerisUpdater {
     * @param soln current horizons solution reference from JPL, if any
     */
   final case class Context(
-    key:  EphemerisKey.Horizons,
-    site: Site,
-    meta: Option[EphemerisMeta],
-    rnge: Option[(InstantMicros, InstantMicros)],
-    soln: Option[HorizonsSolutionRef]) {
+                            key:  EphemerisKey.Horizons,
+                            site: Site,
+                            meta: Option[EphemerisMeta],
+                            rnge: Option[(Timestamp, Timestamp)],
+                            soln: Option[HorizonsSolutionRef]) {
 
     /** Determines whether the existing ephemeris, if any, covers the given
       * semester.

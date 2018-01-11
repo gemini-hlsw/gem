@@ -11,7 +11,7 @@ import gem.arb.ArbEphemerisMeta._
 import gem.arb.ArbTime._
 import gem.enum.Site
 import gem.math.Ephemeris
-import gem.util.InstantMicros
+import gem.util.Timestamp
 
 import cats.implicits._
 
@@ -55,7 +55,7 @@ class EphemerisDaoSpec extends PropSpec with PropertyChecks with DaoTest {
   }
 
   property("EphemerisDao should selectRange") {
-    forAll { (ks: KS, e: Ephemeris, m: EphemerisMap, i0: InstantMicros, i1: InstantMicros) =>
+    forAll { (ks: KS, e: Ephemeris, m: EphemerisMap, i0: Timestamp, i1: Timestamp) =>
       val List(start, end) = List(i0, i1).sorted
       val eʹ = execTest(m + (ks -> e), EphemerisDao.selectRange(ks.key, ks.site, start, end))
       e.toMap.range(start, end) shouldEqual eʹ.toMap
@@ -225,7 +225,7 @@ class EphemerisDaoSpec extends PropSpec with PropertyChecks with DaoTest {
       val em = e.toMap
 
       val expected =
-        if (em.isEmpty) Option.empty[(InstantMicros, InstantMicros)]
+        if (em.isEmpty) Option.empty[(Timestamp, Timestamp)]
         else Some((em.firstKey, em.lastKey))
 
       expected shouldEqual execTest(m + (ks -> e), p)
@@ -233,7 +233,7 @@ class EphemerisDaoSpec extends PropSpec with PropertyChecks with DaoTest {
   }
 
   property("EphemerisDao bracketRange") {
-    import InstantMicros.{ Max, Min }
+    import Timestamp.{ Max, Min }
 
     forAll { (ks: KS, e: Ephemeris, m: EphemerisMap) =>
       val em = e.toMap
@@ -255,7 +255,7 @@ class EphemerisDaoSpec extends PropSpec with PropertyChecks with DaoTest {
   }
 
   property("EphemerisDao bracketRange exact") {
-    import InstantMicros.{ Max, Min }
+    import Timestamp.{ Max, Min }
 
     forAll { (ks: KS, e: Ephemeris, m: EphemerisMap) =>
       val em = e.toMap
