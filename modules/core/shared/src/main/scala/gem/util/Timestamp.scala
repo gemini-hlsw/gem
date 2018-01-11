@@ -15,7 +15,7 @@ import java.time.temporal.ChronoUnit.MICROS
 /** Timestamp wraps a `java.util.Instant` that is truncated to microsecond
   * resolution.  This allows Timestamps to roundtrip to/from the database
   * where only microsecond resolution is supported.  In addition the min
-  * and max instants that are supported are determined by th postgres limit for
+  * and max instants that are supported are determined by the postgres limit for
   * timestamps.
   *
   * @param toInstant

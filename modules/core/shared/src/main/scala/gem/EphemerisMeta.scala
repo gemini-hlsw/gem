@@ -18,9 +18,10 @@ import monocle.macros.Lenses
   *                asteroid ephemeris data fetched from horizons)
   */
 @Lenses final case class EphemerisMeta(
-                                        lastUpdate: Timestamp,
-                                        lastUpdateCheck: Timestamp,
-                                        solnRef: Option[HorizonsSolutionRef])
+  lastUpdate: Timestamp,
+  lastUpdateCheck: Timestamp,
+  solnRef: Option[HorizonsSolutionRef]
+)
 
 @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
 object EphemerisMeta {

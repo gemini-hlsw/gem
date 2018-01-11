@@ -96,9 +96,9 @@ final case class HorizonsEphemerisUpdater(
 
 
   private def updateIfNecessary(
-                                 ctx:  Context,
-                                 time: Timestamp,
-                                 sem:  Semester
+    ctx:  Context,
+    time: Timestamp,
+    sem:  Semester
   ): ConnectionIO[Unit] =
 
     if (ctx.isUpToDateFor(sem)) recordUpdateCheck(ctx, time)
@@ -119,9 +119,9 @@ final case class HorizonsEphemerisUpdater(
 
 
   private def doUpdate(
-                        ctx:  Context,
-                        time: Timestamp,
-                        sem:  Semester
+    ctx:  Context,
+    time: Timestamp,
+    sem:  Semester
   ): ConnectionIO[Unit] = {
 
     // Need to update both meta and ephemeris.  First the new
@@ -170,11 +170,12 @@ object HorizonsEphemerisUpdater {
     * @param soln current horizons solution reference from JPL, if any
     */
   final case class Context(
-                            key:  EphemerisKey.Horizons,
-                            site: Site,
-                            meta: Option[EphemerisMeta],
-                            rnge: Option[(Timestamp, Timestamp)],
-                            soln: Option[HorizonsSolutionRef]) {
+    key:  EphemerisKey.Horizons,
+    site: Site,
+    meta: Option[EphemerisMeta],
+    rnge: Option[(Timestamp, Timestamp)],
+    soln: Option[HorizonsSolutionRef]
+  ) {
 
     /** Determines whether the existing ephemeris, if any, covers the given
       * semester.

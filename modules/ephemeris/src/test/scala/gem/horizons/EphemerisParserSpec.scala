@@ -37,9 +37,11 @@ final class EphemerisParserSpec extends CatsSuite with EphemerisTestSupport {
     checkParse("borrelly", head, tail)
   }
 
-  private def checkParse(name: String,
-                         head: TreeMap[Timestamp, EphemerisCoordinates],
-                         tail: TreeMap[Timestamp, EphemerisCoordinates]): org.scalatest.Assertion = {
+  private def checkParse(
+    name: String,
+    head: TreeMap[Timestamp, EphemerisCoordinates],
+    tail: TreeMap[Timestamp, EphemerisCoordinates]
+  ): org.scalatest.Assertion = {
 
     val e = EphemerisParser.parse(load(name)).option.getOrElse(Ephemeris.Empty)
 
