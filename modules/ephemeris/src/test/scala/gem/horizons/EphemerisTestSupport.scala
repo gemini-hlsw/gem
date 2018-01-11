@@ -22,7 +22,7 @@ trait EphemerisTestSupport {
     DateTimeFormatter.ofPattern("yyyy-MMM-dd HH:mm:ss.SSS")
 
   def time(s: String): InstantMicros =
-    InstantMicros.truncate(LocalDateTime.parse(s, TimeFormat).toInstant(ZoneOffset.UTC))
+    InstantMicros.unsafeClip(LocalDateTime.parse(s, TimeFormat).toInstant(ZoneOffset.UTC))
 
   def coords(s: String): Coordinates =
     Coordinates.Optics.fromHmsDms.getOption(s).getOrElse(Coordinates.Zero)

@@ -54,7 +54,7 @@ object EphemerisParser {
       instantUTC(
         genYMD(monthMMM, hyphen) named "yyyy-MMM-dd",
         genLocalTime(colon)
-      ).map(InstantMicros.truncate)
+      ).flatMap(InstantMicros.clip(_).fold(err[InstantMicros]("date out of range"))(ok))
 
     val element: Parser[Ephemeris.Element] =
       for {

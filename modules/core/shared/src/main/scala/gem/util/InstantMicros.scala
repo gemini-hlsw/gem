@@ -4,15 +4,19 @@
 package gem.util
 
 import cats._
+import cats.implicits._
 import cats.effect.IO
 
-import java.time.Instant
+import java.time.{ Instant, ZonedDateTime }
+import java.time.ZoneOffset.UTC
 import java.time.temporal.ChronoUnit.MICROS
 
 
 /** InstantMicros wraps a `java.util.Instant` that is truncated to microsecond
   * resolution.  This allows InstantMicros to roundtrip to/from the database
-  * where timestamps support only microsecond resolution.
+  * where timestamps support only microsecond resolution.  In addition the min
+  * and max instants that are supported are determined by th postgres limit for
+  * timestamps.
   *
   * @param toInstant
   */
@@ -36,18 +40,18 @@ final class InstantMicros private (val toInstant: Instant) extends AnyVal {
 
   /** Creates an updated instance of InstantMicros by applying the given
     * function to its wrapped Instant.  The computed Instant is truncated to
-    * microsecond precision.
+    * microsecond precision and validated.
     */
-  private def mod(f: Instant => Instant): InstantMicros =
-    InstantMicros.truncate(f(toInstant))
+  private def mod(f: Instant => Instant): Option[InstantMicros] =
+    InstantMicros.clip(f(toInstant))
 
-  def plusMillis(millisToAdd: Long): InstantMicros =
+  def plusMillis(millisToAdd: Long): Option[InstantMicros] =
     mod(_.plusMillis(millisToAdd))
 
-  def plusMicros(microsToAdd: Long): InstantMicros =
+  def plusMicros(microsToAdd: Long): Option[InstantMicros] =
     mod(_.plusNanos(microsToAdd * 1000))
 
-  def plusSeconds(secondsToAdd: Long): InstantMicros =
+  def plusSeconds(secondsToAdd: Long): Option[InstantMicros] =
     mod(_.plusSeconds(secondsToAdd))
 
   override def toString: String =
@@ -56,9 +60,17 @@ final class InstantMicros private (val toInstant: Instant) extends AnyVal {
 
 object InstantMicros {
 
-  val Min:   InstantMicros = InstantMicros.truncate(Instant.MIN)
-  val Max:   InstantMicros = InstantMicros.truncate(Instant.MAX)
-  val Epoch: InstantMicros = InstantMicros.truncate(Instant.EPOCH)
+  /** Minimum time that can be stored in a postgres timestamp. */
+  val Min: InstantMicros =
+    truncate(ZonedDateTime.of( -4712, 1, 1, 0, 0, 0, 0, UTC).toInstant)
+
+  /** Maximum time that can be stored in a postgres timestamp. */
+  val Max: InstantMicros =
+    truncate(ZonedDateTime.of(294275, 12, 31, 23, 59, 59, 999999000, UTC).toInstant)
+
+  /** `Instant.EPOCH` transformed to `InstantMicros`. */
+  val Epoch: InstantMicros =
+    truncate(Instant.EPOCH)
 
 
   /** Creates an InstantMicro from the given Instant, assuring that the time
@@ -66,8 +78,22 @@ object InstantMicros {
     *
     * @group Constructors
     */
-  def truncate(i: Instant): InstantMicros =
+  private def truncate(i: Instant): InstantMicros =
     new InstantMicros(i.truncatedTo(MICROS))
+
+  /** Creates an InstantMicro from the given Instant, assuring that the time
+    * value recorded has a round number of microseconds and that it is within
+    * the range supported by postgres.
+    *
+    * @group Constructors
+    */
+  def clip(i: Instant): Option[InstantMicros] = {
+    val iʹ = truncate(i)
+    if ((iʹ < Min) || (Max < iʹ)) None else Some(iʹ)
+  }
+
+  def unsafeClip(i: Instant): InstantMicros =
+    clip(i).getOrElse(sys.error(s"$i out of InstantMicros range"))
 
   /** Creates an InstantMicro representing the current time, truncated to the
     * last integral number of microseconds.
@@ -84,8 +110,8 @@ object InstantMicros {
     *
     * @group Constructors
     */
-  def ofEpochMilli(epochMilli: Long): InstantMicros =
-    new InstantMicros(Instant.ofEpochMilli(epochMilli))
+  def ofEpochMilli(epochMilli: Long): Option[InstantMicros] =
+    clip(Instant.ofEpochMilli(epochMilli))
 
   implicit val OrderingInstantMicros: Ordering[InstantMicros] =
     Ordering.by(_.toInstant)

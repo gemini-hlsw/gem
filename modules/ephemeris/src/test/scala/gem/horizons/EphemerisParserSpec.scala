@@ -66,7 +66,7 @@ final class EphemerisParserSpec extends CatsSuite with EphemerisTestSupport {
   }
 
   test("Must handle errors") {
-    val z = InstantMicros.ofEpochMilli(0L) -> EphemerisCoordinates.Zero
+    val z = InstantMicros.Min -> EphemerisCoordinates.Zero
     val s = stream("borrelly-error")
              .through(EphemerisParser.elements[IO])
              .handleErrorWith(_ => Stream(z))

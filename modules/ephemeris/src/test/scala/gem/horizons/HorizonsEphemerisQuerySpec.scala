@@ -161,8 +161,8 @@ object HorizonsEphemerisQuerySpec extends EphemerisTestSupport {
   private val start = LocalDateTime.of(2017, Month.AUGUST, 15, 1, 0).toInstant(UTC)
   private val end   = LocalDateTime.of(2017, Month.AUGUST, 15, 2, 0).toInstant(UTC)
 
-  private val startM      = InstantMicros.truncate(start)
-  private val endM        = InstantMicros.truncate(end)
+  private val startM      = InstantMicros.unsafeClip(start)
+  private val endM        = InstantMicros.unsafeClip(end)
 
   private val startCoords = ephCoords("17:21:29.110300 -21:55:46.509000", "-2.85225", "-1.61124")
   private val endCoords   = ephCoords("17:21:28.904000 -21:55:48.103000", "-2.87880", "-1.58756")

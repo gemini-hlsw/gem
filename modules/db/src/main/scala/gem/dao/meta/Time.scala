@@ -10,7 +10,7 @@ import java.time.{ Instant, Duration }
 trait TimeMeta {
 
   implicit val InstantMicrosMeta: Meta[InstantMicros] =
-    Meta[Instant].xmap(InstantMicros.truncate, _.toInstant)
+    Meta[Instant].xmap(InstantMicros.unsafeClip, _.toInstant)
 
   implicit val DurationMeta: Meta[Duration] =
     Distinct.long("milliseconds").xmap(Duration.ofMillis, _.toMillis)

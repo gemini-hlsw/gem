@@ -65,7 +65,12 @@ trait ArbTime {
     Arbitrary(arbitrary[ZonedDateTime].map(_.toInstant))
 
   implicit val arbInstantMicros: Arbitrary[InstantMicros] =
-    Arbitrary(arbitrary[Instant].map(InstantMicros.truncate))
+    Arbitrary {
+      for {
+        m <- Gen.choose(0L, Duration.between(InstantMicros.Min.toInstant, InstantMicros.Max.toInstant).toMillis)
+        u <- Gen.choose(0, 999L)
+      } yield InstantMicros.Min.plusMillis(m).flatMap(_.plusMicros(u)).getOrElse(InstantMicros.Min)
+    }
 
   implicit val arbDuration: Arbitrary[Duration] =
     Arbitrary {
