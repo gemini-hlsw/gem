@@ -20,7 +20,14 @@ import java.time.temporal.ChronoUnit.MICROS
   *
   * @param toInstant
   */
-final class Timestamp private(val toInstant: Instant) extends AnyVal {
+sealed abstract case class Timestamp(toInstant: Instant) {
+
+  import Timestamp.{ MaxInstant, MinInstant }
+
+  // Guaranteed by construction, but verified here.
+  assert(!toInstant.isBefore(MinInstant))
+  assert(!toInstant.isAfter(MaxInstant))
+  assert((toInstant.getNano % 1000L) === 0)
 
   /** Gets the number of seconds from the Java epoch of 1970-01-01T00:00:00Z. */
   def epochSecond: Long =
@@ -60,17 +67,23 @@ final class Timestamp private(val toInstant: Instant) extends AnyVal {
 
 object Timestamp {
 
+  private val MinInstant: Instant =
+    ZonedDateTime.of( -4712, 1, 1, 0, 0, 0, 0, UTC).toInstant
+
+  private val MaxInstant: Instant =
+    ZonedDateTime.of(294275, 12, 31, 23, 59, 59, 999999000, UTC).toInstant
+
   /** Minimum time that can be stored in a postgres timestamp. */
   val Min: Timestamp =
-    truncate(ZonedDateTime.of( -4712, 1, 1, 0, 0, 0, 0, UTC).toInstant)
+    unsafeFromInstant(MinInstant)
 
   /** Maximum time that can be stored in a postgres timestamp. */
   val Max: Timestamp =
-    truncate(ZonedDateTime.of(294275, 12, 31, 23, 59, 59, 999999000, UTC).toInstant)
+    unsafeFromInstant(MaxInstant)
 
   /** `Instant.EPOCH` transformed to `Timestamp`. */
   val Epoch: Timestamp =
-    truncate(Instant.EPOCH)
+    unsafeFromInstant(Instant.EPOCH)
 
   /** Creates a Timestamp from the given Instant, assuring that the time
     * value recorded has a round number of microseconds and that it is within
@@ -79,8 +92,9 @@ object Timestamp {
     * @group Constructors
     */
   def fromInstant(i: Instant): Option[Timestamp] = {
-    val iʹ = truncate(i)
-    if ((iʹ < Min) || (Max < iʹ)) None else Some(iʹ)
+    val iʹ = i.truncatedTo(MICROS)
+    if (iʹ.isBefore(MinInstant) || iʹ.isAfter(MaxInstant)) None
+    else Some(new Timestamp(iʹ) {})
   }
 
   /** Creates a Timestamp from the given Instant if possible, throwing an
@@ -91,13 +105,6 @@ object Timestamp {
   def unsafeFromInstant(i: Instant): Timestamp =
     fromInstant(i).getOrElse(sys.error(s"$i out of Timestamp range"))
 
-  /** Creates a Timestamp from the given Instant, assuring that the time value
-    * recorded has a round number of microseconds. The caller must verify that
-    * the timestamp is in the valid range.
-    */
-  private def truncate(i: Instant): Timestamp =
-    new Timestamp(i.truncatedTo(MICROS))
-
   /** Creates a Timestamp representing the current time, truncated to the
     * last integral number of microseconds.
     *
@@ -105,7 +112,7 @@ object Timestamp {
     */
   def now: IO[Timestamp] =
     IO {
-      truncate(Instant.now())
+      unsafeFromInstant(Instant.now())
     }
 
   /** Creates an InstantMicro representing the current time using milliseconds
