@@ -3,8 +3,21 @@
 
 package gem
 
-import gem.enum.UserTargetType
+import gem.enum.{ Site, UserTargetType }
+import gem.math.Ephemeris
+
+import monocle.Optional
+import monocle.macros.Lenses
+
 
 /** Pairs a `Target` and a `UserTargetType`.
   */
-final case class UserTarget(target: Target, targetType: UserTargetType)
+@Lenses final case class UserTarget(target: Target, targetType: UserTargetType)
+
+@SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
+object UserTarget {
+
+  val ephemerides: Optional[UserTarget, Map[Site, Ephemeris]] =
+    target composeOptional Target.ephemerides
+
+}

@@ -8,6 +8,9 @@ import gem.math._
 import gem.util.Timestamp
 import java.time.Instant
 
+import monocle.{ Optional, Prism }
+import monocle.macros.{ Lenses, GenPrism }
+
 /**
  * Time/site-parameterized coordinates over a span of time. This generalizes proper motion and
  * ephemerides.
@@ -33,12 +36,16 @@ sealed trait Track extends Product with Serializable {
 
 object Track {
 
-  final case class Sidereal(properMotion: ProperMotion) extends Track {
+  @Lenses final case class Sidereal(properMotion: ProperMotion) extends Track {
     override def at(time: Instant, site: Site): Option[Coordinates] =
       Some(properMotion.at(time).baseCoordinates)
   }
 
-  final case class Nonsidereal(ephemerisKey: EphemerisKey, ephemerides: Map[Site, Ephemeris]) extends Track {
+  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
+  object Sidereal
+
+
+  @Lenses final case class Nonsidereal(ephemerisKey: EphemerisKey, ephemerides: Map[Site, Ephemeris]) extends Track {
 
     override def at(time: Instant, s: Site): Option[Coordinates] =
       for {
@@ -51,6 +58,8 @@ object Track {
       ephemerides.get(s)
 
   }
+
+  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
   object Nonsidereal {
 
     def empty(key: EphemerisKey): Nonsidereal =
@@ -58,4 +67,12 @@ object Track {
 
   }
 
+  val sidereal: Prism[Track, Sidereal] =
+    GenPrism[Track, Sidereal]
+
+  val nonsidereal: Prism[Track, Nonsidereal] =
+    GenPrism[Track, Nonsidereal]
+
+  val ephemerides: Optional[Track, Map[Site, Ephemeris]] =
+    nonsidereal composeLens Nonsidereal.ephemerides
 }
