@@ -3,6 +3,8 @@
 
 package gem
 
+import cats.Eq
+
 import gem.enum.Site
 import gem.math.Ephemeris
 
@@ -17,4 +19,7 @@ object Target {
 
   val ephemerides: Optional[Target, Map[Site, Ephemeris]] =
     track composeOptional Track.ephemerides
+
+  implicit val EqTarget: Eq[Target] =
+    Eq.fromUniversalEquals
 }

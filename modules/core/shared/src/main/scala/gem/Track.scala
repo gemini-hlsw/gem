@@ -3,9 +3,12 @@
 
 package gem
 
+import cats.Eq
+
 import gem.enum.Site
 import gem.math._
 import gem.util.Timestamp
+
 import java.time.Instant
 
 import monocle.{ Optional, Prism }
@@ -42,7 +45,11 @@ object Track {
   }
 
   @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
-  object Sidereal
+  object Sidereal {
+
+    implicit val EqSidereal: Eq[Sidereal] =
+      Eq.fromUniversalEquals
+  }
 
 
   @Lenses final case class Nonsidereal(ephemerisKey: EphemerisKey, ephemerides: Map[Site, Ephemeris]) extends Track {
@@ -65,6 +72,9 @@ object Track {
     def empty(key: EphemerisKey): Nonsidereal =
       Nonsidereal(key, Map.empty)
 
+    implicit val EqNonsidereal: Eq[Nonsidereal] =
+      Eq.fromUniversalEquals
+
   }
 
   val sidereal: Prism[Track, Sidereal] =
@@ -75,4 +85,7 @@ object Track {
 
   val ephemerides: Optional[Track, Map[Site, Ephemeris]] =
     nonsidereal composeLens Nonsidereal.ephemerides
+
+  implicit val EqTrack: Eq[Track] =
+    Eq.fromUniversalEquals
 }

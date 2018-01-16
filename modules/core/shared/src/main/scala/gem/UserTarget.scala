@@ -3,6 +3,8 @@
 
 package gem
 
+import cats.Eq
+
 import gem.enum.{ Site, UserTargetType }
 import gem.math.Ephemeris
 
@@ -20,4 +22,6 @@ object UserTarget {
   val ephemerides: Optional[UserTarget, Map[Site, Ephemeris]] =
     target composeOptional Target.ephemerides
 
+  implicit val EqUserTarget: Eq[UserTarget] =
+    Eq.fromUniversalEquals
 }
