@@ -4,7 +4,7 @@
 package gem
 
 import cats.data.OneAnd
-import gem.enum.{ GcalArc, Site }
+import gem.enum.GcalArc
 import gem.config.GcalConfig.GcalArcs
 import gem.config.GmosConfig._
 import gem.math._
@@ -145,18 +145,18 @@ package object json {
   @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
   implicit val EphemerisDecoder: Decoder[Ephemeris] = Decoder[List[Ephemeris.Element]].map(ls => Ephemeris(ls: _*))
 
-  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
-  implicit val NonsiderealEncoder: Encoder[Track.Nonsidereal] = n =>
-    Json.obj(
-      "key"         -> n.ephemerisKey.asJson,
-      "ephemerides" -> n.ephemerides.toList.asJson
-    )
-  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
-  implicit val NonsiderealDecoder: Decoder[Track.Nonsidereal] = c =>
-    for {
-      k <- c.downField("key").as[EphemerisKey]
-      e <- c.downField("ephemerides").as[List[(Site, Ephemeris)]].map(_.toMap)
-    } yield Track.Nonsidereal(k, e)
+//  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
+//  implicit val NonsiderealEncoder: Encoder[Track.Nonsidereal] = n =>
+//    Json.obj(
+//      "key"         -> n.ephemerisKey.asJson,
+//      "ephemerides" -> n.ephemerides.toList.asJson
+//    )
+//  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
+//  implicit val NonsiderealDecoder: Decoder[Track.Nonsidereal] = c =>
+//    for {
+//      k <- c.downField("key").as[EphemerisKey]
+//      e <- c.downField("ephemerides").as[List[(Site, Ephemeris)]].map(_.toMap)
+//    } yield Track.Nonsidereal(k, e)
 
   // Offset.P maps to a signed angle in arcseconds
   implicit val OffsetPEncoder: Encoder[Offset.P] = AngleAsSignedArcsecondsEncoder.contramap(_.toAngle)
