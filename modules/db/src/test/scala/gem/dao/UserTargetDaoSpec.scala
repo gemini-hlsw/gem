@@ -22,24 +22,19 @@ class UserTargetDaoSpec extends PropSpec with PropertyChecks with DaoTest {
       genObservation
     }
 
-  // TODO: We will need to figure out what to do about ephemeris.  It isn't
-  // stored when you write a Target with TargetDao, or loaded when you read one.
-  def stripEphemeris(ut: UserTarget): UserTarget =
-    UserTarget.ephemerides.set(Map.empty)(ut)
-
-  property("UserTargetDao should roundtrip-ish") {
+  property("UserTargetDao should roundtrip") {
     forAll { (obs: Observation[StaticConfig, Step[DynamicConfig]], ut: UserTarget) =>
       val oid = Observation.Id(pid, Observation.Index.unsafeFromInt(1))
 
       val utʹ = withProgram {
         for {
           _  <- ObservationDao.insert(oid, obs)
-          id <- UserTargetDao.insert(stripEphemeris(ut), oid)
+          id <- UserTargetDao.insert(ut, oid)
           uʹ <- UserTargetDao.select(id)
         } yield uʹ
       }
 
-      Some(stripEphemeris(ut)) shouldEqual utʹ
+      Some(ut) shouldEqual utʹ
     }
   }
 }

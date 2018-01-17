@@ -4,7 +4,7 @@
 package gem.ocs2
 
 import cats.implicits._
-import gem.{ Dataset, EphemerisKey, Observation, Program, Step, Target, Track }
+import gem.{ Dataset, EphemerisKey, Observation, Program, Step, Target }
 import gem.config._
 import gem.enum.{ EphemerisKeyType, Instrument, MagnitudeBand, MagnitudeSystem }
 import gem.math._
@@ -68,9 +68,6 @@ object Decoders {
       } yield ProperMotion(c, e, pv, rv, p)
     }
 
-  implicit val SiderealDecoder: PioDecoder[Track.Sidereal] =
-    PioDecoder[ProperMotion].map { Track.Sidereal(_) }
-
   implicit val EphemerisKeyTypeDecoder: PioDecoder[EphemerisKeyType] =
     fromParse { Parsers.ephemerisKeyType }
 
@@ -102,19 +99,11 @@ object Decoders {
       }
     }
 
-
-  implicit val NonsiderealDecoder: PioDecoder[Track.Nonsidereal] =
-    PioDecoder { n =>
-      (n \! "&horizons-designation").decode[EphemerisKey].map { key =>
-        Track.Nonsidereal(key, Map.empty)
-      }
-    }
-
-  implicit val TrackDecoder: PioDecoder[Track] =
+  implicit val TrackDecoder: PioDecoder[Either[EphemerisKey, ProperMotion]] =
     PioDecoder { n =>
       (n \! "#tag").decode[String].flatMap {
-        case "nonsidereal" => PioDecoder[Track.Nonsidereal].decode(n)
-        case "sidereal"    => PioDecoder[Track.Sidereal].decode(n)
+        case "nonsidereal" => (n \! "&horizons-designation").decode[EphemerisKey].map(Left(_))
+        case "sidereal"    => PioDecoder[ProperMotion].decode(n).map(Right(_))
         case tag           => Left(ParseError(tag, "Track"))
       }
     }
@@ -124,7 +113,7 @@ object Decoders {
     PioDecoder { n =>
       for {
         name  <- (n \! "#name").decode[String]
-        track <- PioDecoder[Track].decode(n)
+        track <- PioDecoder[Either[EphemerisKey, ProperMotion]].decode(n)
       } yield Target(name, track)
     }
 
