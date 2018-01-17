@@ -90,7 +90,7 @@ trait Check extends FlatSpec with Matchers with IOChecker {
     }
 
     val target: Target =
-      Target("untitled", Track.Sidereal(ProperMotion.const(Coordinates.Zero)))
+      Target("untitled", Right(ProperMotion.const(Coordinates.Zero)))
 
   }
 
