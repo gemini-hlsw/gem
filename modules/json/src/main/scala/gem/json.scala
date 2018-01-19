@@ -139,25 +139,6 @@ package object json {
       px <- c.downField("parallax")       .as[Option[Angle]](Decoder.decodeOption(AngleAsSignedMilliarcsecondsDecoder))
     } yield ProperMotion(bc, ep, pv, rv, px)
 
-  // Ephemeris as a List[Ephemeris.Element]
-  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
-  implicit val EphemerisEncoder: Encoder[Ephemeris] = Encoder[List[Ephemeris.Element]].contramap(_.toMap.toList)
-  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
-  implicit val EphemerisDecoder: Decoder[Ephemeris] = Decoder[List[Ephemeris.Element]].map(ls => Ephemeris(ls: _*))
-
-//  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
-//  implicit val NonsiderealEncoder: Encoder[Track.Nonsidereal] = n =>
-//    Json.obj(
-//      "key"         -> n.ephemerisKey.asJson,
-//      "ephemerides" -> n.ephemerides.toList.asJson
-//    )
-//  @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
-//  implicit val NonsiderealDecoder: Decoder[Track.Nonsidereal] = c =>
-//    for {
-//      k <- c.downField("key").as[EphemerisKey]
-//      e <- c.downField("ephemerides").as[List[(Site, Ephemeris)]].map(_.toMap)
-//    } yield Track.Nonsidereal(k, e)
-
   // Offset.P maps to a signed angle in arcseconds
   implicit val OffsetPEncoder: Encoder[Offset.P] = AngleAsSignedArcsecondsEncoder.contramap(_.toAngle)
   implicit val OffsetPDecoder: Decoder[Offset.P] = AngleAsSignedArcsecondsDecoder.map(Offset.P.apply)

@@ -124,8 +124,8 @@ object Decoders {
   implicit val UserTargetDecoder: PioDecoder[UserTarget] =
     PioDecoder { n =>
       for {
-        t <- (n \! "spTarget" \! "target").decode[Target]
-        y <- (n \! "#type"               ).decode[UserTargetType]
+        t <- (n \! "&spTarget" \! "&target").decode[Target]
+        y <- (n \! "#type"                 ).decode[UserTargetType]
       } yield UserTarget(t, y)
     }
 
@@ -176,9 +176,17 @@ object Decoders {
     def validTargets(lst: PioPath.Listing): PioPath.Listing =
       lst.copy(node = lst.node.map { ns =>
         ns.filter { n =>
-          trackType(n).fold(false) {
-            case TrackType.Sidereal    => true
-            case TrackType.Nonsidereal => (n \? "&horizons-designation").node.isDefined.getOrElse(false)
+
+          // We have to drill down to the target node for this filter and
+          // extract the track type
+          val ty = for {
+            t <- (n \! "&spTarget" \! "&target").node.toOption // "target" node
+            y <- trackType(t)                                  // track type
+          } yield (t, y)
+
+          // Sidereal targets or non-sidereal with an horizons id are ok
+          ty.exists { case (t, y) =>
+            (y === TrackType.Sidereal) || (t \? "&horizons-designation").node.isDefined.getOrElse(false)
           }
         }
       })
@@ -187,7 +195,7 @@ object Decoders {
       for {
         // a <- asterism
         // g <- guideEnvironment
-        uts <- validTargets(n \? "userTargets" \* "userTarget").decode[UserTarget]
+        uts <- validTargets(n \? "&userTargets" \* "&userTarget").decode[UserTarget]
       } yield TargetEnvironment(uts.toSet)
     }
   }
@@ -195,10 +203,10 @@ object Decoders {
   implicit val ObservationDecoder: PioDecoder[Observation[StaticConfig, Step[DynamicConfig]]] =
     PioDecoder { n =>
       for {
-        t  <- (n \! "data" \? "#title"                  ).decodeOrZero[String]
-        e  <- (n \? "telescope" \! "data" \! "targetEnv").decodeOrElse(TargetEnvironment.empty)
-        st <- (n \! "sequence"                          ).decode[StaticConfig](StaticDecoder)
-        sq <- (n \! "sequence"                          ).decode[List[Step[DynamicConfig]]](SequenceDecoder)
+        t  <- (n \! "data" \? "#title"                   ).decodeOrZero[String]
+        e  <- (n \? "telescope" \! "data" \! "&targetEnv").decodeOrElse(TargetEnvironment.empty)
+        st <- (n \! "sequence"                           ).decode[StaticConfig](StaticDecoder)
+        sq <- (n \! "sequence"                           ).decode[List[Step[DynamicConfig]]](SequenceDecoder)
       } yield Observation(t, e, st, sq)
     }
 
