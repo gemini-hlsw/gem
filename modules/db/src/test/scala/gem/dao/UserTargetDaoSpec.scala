@@ -21,7 +21,7 @@ class UserTargetDaoSpec extends PropSpec with PropertyChecks with DaoTest {
       val utʹ = withProgram {
         for {
           _  <- ObservationDao.insert(oid, obs)
-          id <- UserTargetDao.insert(ut, oid)
+          id <- UserTargetDao.insert(oid, ut)
           uʹ <- UserTargetDao.select(id)
         } yield uʹ
       }

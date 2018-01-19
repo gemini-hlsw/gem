@@ -15,7 +15,7 @@ import doobie.implicits._
 object TargetEnvironmentDao {
 
   def insert(oid: Observation.Id, e: TargetEnvironment): ConnectionIO[Unit] =
-    e.userTargets.toList.traverse(UserTargetDao.insert(_, oid)).void
+    e.userTargets.toList.traverse(UserTargetDao.insert(oid, _)).void
 
   def select(oid: Observation.Id): ConnectionIO[TargetEnvironment] =
     UserTargetDao.selectAll(oid: Observation.Id).map { lst =>
