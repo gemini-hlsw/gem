@@ -7,10 +7,10 @@ package ocs2
 import cats.implicits._
 import gem.{ Dataset, EphemerisKey, Observation, Program, Step, Target }
 import gem.config._
-import gem.enum.{ EphemerisKeyType, Instrument, MagnitudeBand, MagnitudeSystem }
+import gem.enum._
 import gem.math._
 import gem.ocs2.pio.PioPath._
-import gem.ocs2.pio.{ PioDecoder, PioError }
+import gem.ocs2.pio.{ PioDecoder, PioError, PioPath }
 import gem.ocs2.pio.PioError.ParseError
 import gem.ocs2.pio.PioDecoder.fromParse
 import gem.syntax.string._
@@ -118,6 +118,17 @@ object Decoders {
       } yield Target(name, track)
     }
 
+  implicit val UserTargetTypeDecoder: PioDecoder[UserTargetType] =
+    fromParse { Parsers.userTargetType }
+
+  implicit val UserTargetDecoder: PioDecoder[UserTarget] =
+    PioDecoder { n =>
+      for {
+        t <- (n \! "spTarget" \! "target").decode[Target]
+        y <- (n \! "#type"               ).decode[UserTargetType]
+      } yield UserTarget(t, y)
+    }
+
   implicit val DatasetLabelDecoder: PioDecoder[Dataset.Label] =
     fromParse { Parsers.datasetLabel }
 
@@ -152,13 +163,43 @@ object Decoders {
       (n \! "@name").decode[Observation.Id].map(_.index)
     }
 
+  implicit val TargetEnvironmentDecoder: PioDecoder[TargetEnvironment] = {
+    import gem.enum.TrackType
+
+    def trackType(targetNode: scala.xml.Node): Option[TrackType] =
+      (targetNode \? "#tag").decode[String].toOption.flatten.collect {
+        case "sidereal"    => TrackType.Sidereal: TrackType
+        case "nonsidereal" => TrackType.Nonsidereal: TrackType
+      }
+
+    // filter out "too" and empty non-sidereal (that is, w/o horizons id) for now
+    def validTargets(lst: PioPath.Listing): PioPath.Listing =
+      lst.copy(node = lst.node.map { ns =>
+        ns.filter { n =>
+          trackType(n).fold(false) {
+            case TrackType.Sidereal    => true
+            case TrackType.Nonsidereal => (n \? "&horizons-designation").node.isDefined.getOrElse(false)
+          }
+        }
+      })
+
+    PioDecoder { n =>
+      for {
+        // a <- asterism
+        // g <- guideEnvironment
+        uts <- validTargets(n \? "userTargets" \* "userTarget").decode[UserTarget]
+      } yield TargetEnvironment(uts.toSet)
+    }
+  }
+
   implicit val ObservationDecoder: PioDecoder[Observation[StaticConfig, Step[DynamicConfig]]] =
     PioDecoder { n =>
       for {
-        t  <- (n \! "data" \? "#title").decodeOrZero[String]
-        st <- (n \! "sequence"        ).decode[StaticConfig](StaticDecoder)
-        sq <- (n \! "sequence"        ).decode[List[Step[DynamicConfig]]](SequenceDecoder)
-      } yield Observation(t, TargetEnvironment.empty, st, sq)
+        t  <- (n \! "data" \? "#title"                  ).decodeOrZero[String]
+        e  <- (n \? "telescope" \! "data" \! "targetEnv").decodeOrElse(TargetEnvironment.empty)
+        st <- (n \! "sequence"                          ).decode[StaticConfig](StaticDecoder)
+        sq <- (n \! "sequence"                          ).decode[List[Step[DynamicConfig]]](SequenceDecoder)
+      } yield Observation(t, e, st, sq)
     }
 
   implicit val ProgramDecoder: PioDecoder[Program[Observation[StaticConfig, Step[DynamicConfig]]]] =
@@ -171,35 +212,4 @@ object Decoders {
       } yield Program(id, t, TreeMap(is.zip(os): _*))
     }
 
-  /** Decodes all the program's targets, regardless of where they may be found.
-    */
-  implicit val TargetsDecoder: PioDecoder[List[Target]] = {
-
-    // (I plan for this to be temporary.  Targets will be associated with
-    // observations and read where an observation is read.)
-
-    import gem.enum.TrackType
-
-    def trackType(targetNode: scala.xml.Node): Option[TrackType] =
-      (targetNode \? "#tag").decode[String].toOption.flatten.collect {
-        case "sidereal"    => TrackType.Sidereal: TrackType
-        case "nonsidereal" => TrackType.Nonsidereal: TrackType
-      }
-
-    PioDecoder { n =>
-      val listing = (n \\* "&target")
-
-      // filter out "too" and empty non-sidereal (that is, w/o horizons id) for now
-      val targets = listing.copy(node = listing.node.map { ns =>
-        ns.filter { n =>
-          trackType(n).fold(false) {
-            case TrackType.Sidereal    => true
-            case TrackType.Nonsidereal => (n \? "&horizons-designation").node.isDefined.getOrElse(false)
-          }
-        }
-      })
-
-      targets.decode[Target]
-    }
-  }
 }
