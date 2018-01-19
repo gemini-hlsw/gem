@@ -10,17 +10,9 @@ import org.scalatest._
 import org.scalatest.prop._
 import org.scalatest.Matchers._
 
-import org.scalacheck.Arbitrary
-import org.scalacheck.Arbitrary._
-
 
 class UserTargetDaoSpec extends PropSpec with PropertyChecks with DaoTest {
   import gem.arb.ArbUserTarget._
-
-  implicit val arbObservation: Arbitrary[Observation[StaticConfig, Step[DynamicConfig]]] =
-    Arbitrary {
-      genObservation
-    }
 
   property("UserTargetDao should roundtrip") {
     forAll { (obs: Observation[StaticConfig, Step[DynamicConfig]], ut: UserTarget) =>
