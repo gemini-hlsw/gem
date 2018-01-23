@@ -13,6 +13,7 @@ final class TargetSpec extends CatsSuite {
   import ArbTarget._
 
   // Laws
-  checkAll("Target", OrderTests[Target].order)
+  checkAll("Target", EqTests[Target].eqv)
+  checkAll("TargetName", OrderTests[Target](Target.TargetNameOrder).order)
   checkAll("TargetTrack", OrderTests[Target](Target.TargetTrackOrder).order)
 }

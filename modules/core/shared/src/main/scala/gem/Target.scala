@@ -16,8 +16,14 @@ import monocle.macros.Lenses
 @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
 object Target {
 
-  /** Targets ordered by name first and then tracking information. */
-  implicit val TargetOrder: Order[Target] =
+  implicit val EqTarget: Eq[Target] =
+    Eq.fromUniversalEquals
+
+  /** Targets ordered by name first and then tracking information.
+    *
+    * Not implicit.
+    */
+  val TargetNameOrder: Order[Target] =
     Order.by(t => (t.name, t.track))
 
   /** A target order based on tracking information.  For sidereal targets this
