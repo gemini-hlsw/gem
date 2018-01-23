@@ -3,7 +3,7 @@
 
 package gem.math
 
-import cats.Eq
+import cats._
 import cats.implicits._
 import java.time.Instant
 import scala.math.{ sin, cos, hypot, atan2 }
@@ -170,9 +170,21 @@ object ProperMotion {
   }
   // scalastyle:on method.length
 
-  implicit val EqProperMotion: Eq[ProperMotion] =
-    Eq.fromUniversalEquals
+  implicit val OrderProperMotion: Order[ProperMotion] = {
 
+    implicit val MonoidOrder: Monoid[Order[ProperMotion]] =
+      Order.whenEqualMonoid[ProperMotion]
+
+    def order[A: Order](f: ProperMotion => A): Order[ProperMotion] =
+      Order.by(f)
+
+    order(_.baseCoordinates)  |+|
+      order(_.epoch)          |+|
+      order(_.properVelocity) |+|
+      order(_.radialVelocity) |+|
+      order(_.parallax)(catsKernelStdOrderForOption(Angle.SignedAngleOrder))
+
+  }
 }
 
 
