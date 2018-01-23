@@ -79,7 +79,7 @@ object Offset {
     implicit val ShowP: Show[P] =
       Show.fromToString
 
-    /** P components are by signed microarcseconds. */
+    /** P components are by signed angle. */
     implicit val OrderP: Order[P] =
       Order.by(_.toAngle.toSignedMicroarcseconds)
 
@@ -118,7 +118,7 @@ object Offset {
     implicit val ShowQ: Show[Q] =
       Show.fromToString
 
-    /** Q components are ordered by signed microarcseconds. */
+    /** Q components are ordered by signed angle. */
     implicit val OrderQ: Order[Q] =
       Order.by(_.toAngle.toSignedMicroarcseconds)
 

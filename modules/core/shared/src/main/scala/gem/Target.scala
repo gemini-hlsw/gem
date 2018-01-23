@@ -17,7 +17,7 @@ import monocle.macros.Lenses
 object Target {
 
   /** A target order based on tracking information.  For sidereal targets this
-    * roughly means by base coordinate without applying propermotion.  For
+    * roughly means by base coordinate without applying proper motion.  For
     * non-sidereal this means by `EphemerisKey`.
     */
   implicit val TargetTrackOrder: Order[Target] =

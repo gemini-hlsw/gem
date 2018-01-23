@@ -194,7 +194,7 @@ object Angle {
   val AngleOrder: Order[Angle] =
     Order.by(_.toMicroarcseconds)
 
-  /** Sorts Angle by signed microarcseconds, so [-180, 180).  Not implicit. */
+  /** Sorts Angle by signed angle, so [-180, 180).  Not implicit. */
   val SignedAngleOrder: Order[Angle] =
     Order.by(_.toSignedMicroarcseconds)
 
