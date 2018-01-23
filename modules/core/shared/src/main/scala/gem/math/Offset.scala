@@ -81,7 +81,7 @@ object Offset {
 
     /** P components are by signed angle. */
     implicit val OrderP: Order[P] =
-      Order.by(_.toAngle.toSignedMicroarcseconds)
+      Angle.SignedAngleOrder.contramap(_.toAngle)
 
   }
 
@@ -120,7 +120,7 @@ object Offset {
 
     /** Q components are ordered by signed angle. */
     implicit val OrderQ: Order[Q] =
-      Order.by(_.toAngle.toSignedMicroarcseconds)
+      Angle.SignedAngleOrder.contramap(_.toAngle)
 
   }
 
