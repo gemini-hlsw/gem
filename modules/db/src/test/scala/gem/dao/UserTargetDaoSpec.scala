@@ -51,17 +51,15 @@ class UserTargetDaoSpec extends PropSpec with PropertyChecks with DaoTest {
   property("UserTargetDao should bulk select program") {
     forAll(genObservationMap(10)) { m =>
 
-      val obsList = m.toList.map { case (i, o) =>
-        (Observation.Id(pid, i), o)
-      }
+      val obsList = m.toList
 
-      val expected = obsList.map { case (oid, obs) =>
-        oid -> obs.targets.userTargets
+      val expected = obsList.map { case (oi, obs) =>
+        oi -> obs.targets.userTargets
       }.filter(_._2.nonEmpty).toMap
 
       val actual = withProgram {
         for {
-          _   <- obsList.traverse_((ObservationDao.insert _).tupled)
+          _   <- obsList.traverse_ { case (oi, obs) => ObservationDao.insert(Observation.Id(pid, oi), obs) }
           uts <- UserTargetDao.selectProg(pid)
         } yield uts
       }

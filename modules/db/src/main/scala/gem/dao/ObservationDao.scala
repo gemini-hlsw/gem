@@ -64,7 +64,7 @@ object ObservationDao {
     ts: Map[I, TargetEnvironment]
   ): TreeMap[I, Observation[S, D]] =
     os.foldLeft(TreeMap.empty[I, Observation[S, D]]) { case (m, (i, o)) =>
-      ts.get(i).fold(m)(t => m.updated(i, o.copy(targets = t)))
+      m.updated(i, ts.get(i).fold(o)(t => o.copy(targets = t)))
     }
 
   /**
@@ -74,8 +74,8 @@ object ObservationDao {
   def selectAllFlat(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Instrument, Nothing]]] =
     for {
       m  <- Statements.selectAllFlat(pid).list.map(lst => TreeMap(lst.map { case (i,o,_) => (i,o) }: _*))
-      ts <- m.keys.toList.traverse(i => TargetEnvironmentDao.selectObs(Observation.Id(pid, i)).tupleLeft(i))
-    } yield merge(m, ts.toMap)
+      ts <- TargetEnvironmentDao.selectProg(pid)
+    } yield merge(m, ts)
 
   /**
    * Construct a program to select all observations for the specified science program, with the
@@ -85,8 +85,8 @@ object ObservationDao {
     for {
       ids <- selectIds(pid)
       oss <- ids.traverse(selectStatic)
-      ts  <- ids.traverse(i => TargetEnvironmentDao.selectObs(i).tupleLeft(i.index))
-    } yield merge(TreeMap(ids.map(_.index).zip(oss): _*), ts.toMap)
+      ts  <- TargetEnvironmentDao.selectProg(pid)
+    } yield merge(TreeMap(ids.map(_.index).zip(oss): _*), ts)
 
   /**
    * Construct a program to select all observations for the specified science program, with the
@@ -96,8 +96,8 @@ object ObservationDao {
     for {
       ids <- selectIds(pid)
       oss <- ids.traverse(select)
-      ts  <- ids.traverse(i => TargetEnvironmentDao.selectObs(i).tupleLeft(i.index))
-    } yield merge(TreeMap(ids.map(_.index).zip(oss): _*), ts.toMap)
+      ts  <- TargetEnvironmentDao.selectProg(pid)
+    } yield merge(TreeMap(ids.map(_.index).zip(oss): _*), ts)
 
   object Statements {
 

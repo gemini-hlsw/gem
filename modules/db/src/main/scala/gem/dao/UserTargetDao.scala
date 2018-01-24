@@ -17,7 +17,7 @@ object UserTargetDao {
 
   // A target ID and the corresponding user target type.  We use the id to
   // get the actual target.
-  final case class ProtoUserTarget(targetId: Int, targetType: UserTargetType, oid: Observation.Id) {
+  final case class ProtoUserTarget(targetId: Int, targetType: UserTargetType, oi: Observation.Index) {
 
     val toUserTarget: ConnectionIO[Option[UserTarget]] =
       TargetDao.select(targetId).map { _.map(UserTarget(_, targetType)) }
@@ -39,14 +39,14 @@ object UserTargetDao {
       out  <- oput.fold(Option.empty[UserTarget].pure[ConnectionIO]) { _.toUserTarget }
     } yield out
 
-  private def select_(
-    q: Query0[(Int, ProtoUserTarget)]
-  ): ConnectionIO[List[(Observation.Id, (Int, UserTarget))]] =
+  private def selectAll(
+    targetsQuery: Query0[(Int, ProtoUserTarget)]
+  ): ConnectionIO[List[(Observation.Index, (Int, UserTarget))]] =
     for {
-      puts <- q.list                                             // List[(Int, ProtoUserTarget)]
+      puts <- targetsQuery.list                                  // List[(Int, ProtoUserTarget)]
       ots  <- puts.map(_._2.targetId).traverse(TargetDao.select) // List[Option[Target]]
     } yield puts.zip(ots).flatMap { case ((id, put), ot) =>
-      ot.map(t => (put.oid, (id, UserTarget(t, put.targetType)))).toList
+      ot.map(t => (put.oi, (id, UserTarget(t, put.targetType)))).toList
     }
 
   private def toUserTargetSet(lst: List[(Int, UserTarget)]): TreeSet[UserTarget] =
@@ -61,18 +61,18 @@ object UserTargetDao {
     * id itself.
     */
   def selectObsWithId(oid: Observation.Id): ConnectionIO[List[(Int, UserTarget)]] =
-    select_(Statements.selectObs(oid)).map(_.unzip._2)
+    selectAll(Statements.selectObs(oid)).map(_.unzip._2)
 
   /** Selects all `UserTarget`s for a program.
     */
-  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Id, TreeSet[UserTarget]]] =
+  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Index, TreeSet[UserTarget]]] =
     selectProgWithId(pid).map(_.mapValues(toUserTargetSet))
 
   /** Selects all `UserTarget`s for a program paired with the `UserTarget` id
     * itself.
     */
-  def selectProgWithId(pid: Program.Id): ConnectionIO[Map[Observation.Id, List[(Int, UserTarget)]]] =
-    select_(Statements.selectProg(pid)).map {
+  def selectProgWithId(pid: Program.Id): ConnectionIO[Map[Observation.Index, List[(Int, UserTarget)]]] =
+    selectAll(Statements.selectProg(pid)).map {
       _.groupBy(_._1).mapValues(_.unzip._2)
     }
 
@@ -103,7 +103,7 @@ object UserTargetDao {
       sql"""
         SELECT target_id,
                user_target_type,
-               observation_id
+               observation_index
           FROM user_target
          WHERE id = $id
       """.query[ProtoUserTarget]
@@ -113,7 +113,7 @@ object UserTargetDao {
         SELECT id,
                target_id,
                user_target_type,
-               observation_id
+               observation_index
           FROM user_target
          WHERE program_id = ${oid.pid} AND observation_index = ${oid.index}
       """.query[(Int, ProtoUserTarget)]
@@ -123,7 +123,7 @@ object UserTargetDao {
         SELECT id,
                target_id,
                user_target_type,
-               observation_id
+               observation_index
           FROM user_target
          WHERE program_id = $pid
       """.query[(Int, ProtoUserTarget)]

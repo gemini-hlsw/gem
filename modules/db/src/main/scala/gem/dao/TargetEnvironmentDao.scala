@@ -21,6 +21,6 @@ object TargetEnvironmentDao {
   def selectObs(oid: Observation.Id): ConnectionIO[TargetEnvironment] =
     UserTargetDao.selectObs(oid).map(TargetEnvironment(_))
 
-  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Id, TargetEnvironment]] =
+  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Index, TargetEnvironment]] =
     UserTargetDao.selectProg(pid).map(_.mapValues(TargetEnvironment(_)))
 }
