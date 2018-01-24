@@ -36,21 +36,23 @@ object UserTargetDao {
       out  <- oput.fold(Option.empty[UserTarget].pure[ConnectionIO]) { _.toUserTarget }
     } yield out
 
-  def selectObs(oid: Observation.Id): ConnectionIO[List[(Int, UserTarget)]] =
+  private def select_(
+    q: Query0[(Int, ProtoUserTarget)]
+  ): ConnectionIO[List[(Observation.Id, (Int, UserTarget))]] =
     for {
-      puts <- Statements.selectObs(oid).list                     // List[(Int, ProtoUserTarget)]
+      puts <- q.list                                             // List[(Int, ProtoUserTarget)]
       ots  <- puts.map(_._2.targetId).traverse(TargetDao.select) // List[Option[Target]]
     } yield puts.zip(ots).flatMap { case ((id, put), ot) =>
-      ot.map(t => id -> UserTarget(t, put.targetType)).toList
+      ot.map(t => (put.oid, (id, UserTarget(t, put.targetType)))).toList
     }
 
+  def selectObs(oid: Observation.Id): ConnectionIO[List[(Int, UserTarget)]] =
+    select_(Statements.selectObs(oid)).map(_.unzip._2)
+
   def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Id, List[(Int, UserTarget)]]] =
-    for {
-      puts <- Statements.selectProg(pid).list                    // List[(Int, ProtoUserTarget)]
-      ots  <- puts.map(_._2.targetId).traverse(TargetDao.select) // List[Option[Target]]
-    } yield puts.zip(ots).flatMap { case ((id, put), ot) =>
-      ot.map(t => (put.oid, id, UserTarget(t, put.targetType))).toList
-    }.groupBy(_._1).mapValues(lst => lst.map { case (_, id, ut) => (id, ut) })
+    select_(Statements.selectProg(pid)).map {
+      _.groupBy(_._1).mapValues(_.unzip._2)
+    }
 
 
   object Statements {
