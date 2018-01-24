@@ -6,10 +6,12 @@ package dao
 
 import gem.dao.meta._
 import gem.enum.UserTargetType
+import gem.syntax.treesetcompanion._
 
 import cats.implicits._
 import doobie._, doobie.implicits._
 
+import scala.collection.immutable.TreeSet
 
 object UserTargetDao {
 
@@ -30,6 +32,7 @@ object UserTargetDao {
       uid <- Statements.insert(tid, userTarget.targetType, oid).withUniqueGeneratedKeys[Int]("id")
     } yield uid
 
+  /** Selects the single `UserTarget` associated with the given id, if any. */
   def select(id: Int): ConnectionIO[Option[UserTarget]] =
     for {
       oput <- Statements.select(id).option
@@ -46,10 +49,29 @@ object UserTargetDao {
       ot.map(t => (put.oid, (id, UserTarget(t, put.targetType)))).toList
     }
 
-  def selectObs(oid: Observation.Id): ConnectionIO[List[(Int, UserTarget)]] =
+  private def toUserTargetSet(lst: List[(Int, UserTarget)]): TreeSet[UserTarget] =
+    TreeSet.fromList(lst.unzip._2)
+
+  /** Selects all `UserTarget`s for an observation.
+    */
+  def selectObs(oid: Observation.Id): ConnectionIO[TreeSet[UserTarget]] =
+    selectObsWithId(oid).map(toUserTargetSet)
+
+  /** Selects all `UserTarget`s for an observation paired with the `UserTarget`
+    * id itself.
+    */
+  def selectObsWithId(oid: Observation.Id): ConnectionIO[List[(Int, UserTarget)]] =
     select_(Statements.selectObs(oid)).map(_.unzip._2)
 
-  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Id, List[(Int, UserTarget)]]] =
+  /** Selects all `UserTarget`s for a program.
+    */
+  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Id, TreeSet[UserTarget]]] =
+    selectProgWithId(pid).map(_.mapValues(toUserTargetSet))
+
+  /** Selects all `UserTarget`s for a program paired with the `UserTarget` id
+    * itself.
+    */
+  def selectProgWithId(pid: Program.Id): ConnectionIO[Map[Observation.Id, List[(Int, UserTarget)]]] =
     select_(Statements.selectProg(pid)).map {
       _.groupBy(_._1).mapValues(_.unzip._2)
     }

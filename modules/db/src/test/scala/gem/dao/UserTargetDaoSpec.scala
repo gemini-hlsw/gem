@@ -4,6 +4,9 @@
 package gem
 package dao
 
+import cats.implicits._
+import doobie.implicits._
+
 import gem.config.{ DynamicConfig, StaticConfig }
 
 import org.scalatest._
@@ -27,6 +30,43 @@ class UserTargetDaoSpec extends PropSpec with PropertyChecks with DaoTest {
       }
 
       Some(ut) shouldEqual utʹ
+    }
+  }
+
+  property("UserTargetDao should bulk select observation") {
+    forAll { (obs: Observation[StaticConfig, Step[DynamicConfig]]) =>
+      val oid = Observation.Id(pid, Observation.Index.One)
+
+      val actual = withProgram {
+        for {
+          _   <- ObservationDao.insert(oid, obs)
+          uts <- UserTargetDao.selectObs(oid)
+        } yield uts
+      }
+
+      obs.targets.userTargets shouldEqual actual
+    }
+  }
+
+  property("UserTargetDao should bulk select program") {
+    forAll(genObservationMap(10)) { m =>
+
+      val obsList = m.toList.map { case (i, o) =>
+        (Observation.Id(pid, i), o)
+      }
+
+      val expected = obsList.map { case (oid, obs) =>
+        oid -> obs.targets.userTargets
+      }.filter(_._2.nonEmpty).toMap
+
+      val actual = withProgram {
+        for {
+          _   <- obsList.traverse_((ObservationDao.insert _).tupled)
+          uts <- UserTargetDao.selectProg(pid)
+        } yield uts
+      }
+
+      expected shouldEqual actual
     }
   }
 }
