@@ -16,6 +16,7 @@ import scala.collection.immutable.TreeMap
 object ObservationDao {
   import EnumeratedMeta._
   import ObservationIdMeta._
+  import ObservationIndexMeta._
   import ProgramIdMeta._
 
   /**
@@ -36,7 +37,7 @@ object ObservationDao {
   def selectFlat(id: Observation.Id): ConnectionIO[Observation[Instrument, Nothing]] =
     for {
       o <- Statements.selectFlat(id).unique.map(_._1)
-      t <- TargetEnvironmentDao.select(id)
+      t <- TargetEnvironmentDao.selectObs(id)
     } yield o.copy(targets = t)
 
   /** Construct a program to select the specified observation, with static connfig and no steps. */
@@ -73,7 +74,7 @@ object ObservationDao {
   def selectAllFlat(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Instrument, Nothing]]] =
     for {
       m  <- Statements.selectAllFlat(pid).list.map(lst => TreeMap(lst.map { case (i,o,_) => (i,o) }: _*))
-      ts <- m.keys.toList.traverse(i => TargetEnvironmentDao.select(Observation.Id(pid, i)).tupleLeft(i))
+      ts <- m.keys.toList.traverse(i => TargetEnvironmentDao.selectObs(Observation.Id(pid, i)).tupleLeft(i))
     } yield merge(m, ts.toMap)
 
   /**
@@ -84,7 +85,7 @@ object ObservationDao {
     for {
       ids <- selectIds(pid)
       oss <- ids.traverse(selectStatic)
-      ts  <- ids.traverse(i => TargetEnvironmentDao.select(i).tupleLeft(i.index))
+      ts  <- ids.traverse(i => TargetEnvironmentDao.selectObs(i).tupleLeft(i.index))
     } yield merge(TreeMap(ids.map(_.index).zip(oss): _*), ts.toMap)
 
   /**
@@ -95,15 +96,11 @@ object ObservationDao {
     for {
       ids <- selectIds(pid)
       oss <- ids.traverse(select)
-      ts  <- ids.traverse(i => TargetEnvironmentDao.select(i).tupleLeft(i.index))
+      ts  <- ids.traverse(i => TargetEnvironmentDao.selectObs(i).tupleLeft(i.index))
     } yield merge(TreeMap(ids.map(_.index).zip(oss): _*), ts.toMap)
 
   object Statements {
 
-    // Observation.Index has a DISTINCT type due to its check constraint so we
-    // need a fine-grained mapping here to satisfy the query checker.
-    implicit val ObservationIndexMeta: Meta[Observation.Index] =
-    Distinct.integer("id_index").xmap(Observation.Index.unsafeFromInt, _.toInt)
 
     def insert(oid: Observation.Id, o: Observation[StaticConfig, _], staticId: Int): Update0 =
       sql"""
@@ -153,7 +150,7 @@ object ObservationDao {
       ORDER BY observation_index
       """.query[(Short, String, Instrument, Int)]
         .map { case (n, t, i, s) =>
-          (Observation.Index.unsafeFromInt(n.toInt), Observation(t, TargetEnvironment.empty, i, Nil), s)
+          (Observation.Index.unsafeFromShort(n), Observation(t, TargetEnvironment.empty, i, Nil), s)
         }
 
   }

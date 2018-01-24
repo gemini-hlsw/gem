@@ -21,9 +21,12 @@ object TargetEnvironmentDao {
   def insert(oid: Observation.Id, e: TargetEnvironment): ConnectionIO[Unit] =
     e.userTargets.toList.traverse(UserTargetDao.insert(oid, _)).void
 
-  def select(oid: Observation.Id): ConnectionIO[TargetEnvironment] =
-    UserTargetDao.selectAll(oid: Observation.Id).map { lst =>
-      TargetEnvironment(TreeSet.fromList(lst.unzip._2))
-    }
+  private def toTargetEnvironment(lst: List[(Int, UserTarget)]): TargetEnvironment =
+    TargetEnvironment(TreeSet.fromList(lst.unzip._2))
 
+  def selectObs(oid: Observation.Id): ConnectionIO[TargetEnvironment] =
+    UserTargetDao.selectObs(oid).map(toTargetEnvironment)
+
+  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Id, TargetEnvironment]] =
+    UserTargetDao.selectProg(pid).map(_.mapValues(toTargetEnvironment))
 }

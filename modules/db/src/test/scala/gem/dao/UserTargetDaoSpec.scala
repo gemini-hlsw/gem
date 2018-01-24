@@ -16,7 +16,7 @@ class UserTargetDaoSpec extends PropSpec with PropertyChecks with DaoTest {
 
   property("UserTargetDao should roundtrip") {
     forAll { (obs: Observation[StaticConfig, Step[DynamicConfig]], ut: UserTarget) =>
-      val oid = Observation.Id(pid, Observation.Index.unsafeFromInt(1))
+      val oid = Observation.Id(pid, Observation.Index.One)
 
       val utʹ = withProgram {
         for {

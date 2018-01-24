@@ -15,7 +15,7 @@ object UserTargetDao {
 
   // A target ID and the corresponding user target type.  We use the id to
   // get the actual target.
-  final case class ProtoUserTarget(targetId: Int, targetType: UserTargetType) {
+  final case class ProtoUserTarget(targetId: Int, targetType: UserTargetType, oid: Observation.Id) {
 
     val toUserTarget: ConnectionIO[Option[UserTarget]] =
       TargetDao.select(targetId).map { _.map(UserTarget(_, targetType)) }
@@ -36,26 +36,41 @@ object UserTargetDao {
       out  <- oput.fold(Option.empty[UserTarget].pure[ConnectionIO]) { _.toUserTarget }
     } yield out
 
-  def selectAll(oid: Observation.Id): ConnectionIO[List[(Int, UserTarget)]] =
+  def selectObs(oid: Observation.Id): ConnectionIO[List[(Int, UserTarget)]] =
     for {
-      puts <- Statements.selectAll(oid).list                     // List[(Int, ProtoUserTarget)]
+      puts <- Statements.selectObs(oid).list                     // List[(Int, ProtoUserTarget)]
       ots  <- puts.map(_._2.targetId).traverse(TargetDao.select) // List[Option[Target]]
     } yield puts.zip(ots).flatMap { case ((id, put), ot) =>
       ot.map(t => id -> UserTarget(t, put.targetType)).toList
     }
 
+  def selectProg(pid: Program.Id): ConnectionIO[Map[Observation.Id, List[(Int, UserTarget)]]] =
+    for {
+      puts <- Statements.selectProg(pid).list                    // List[(Int, ProtoUserTarget)]
+      ots  <- puts.map(_._2.targetId).traverse(TargetDao.select) // List[Option[Target]]
+    } yield puts.zip(ots).flatMap { case ((id, put), ot) =>
+      ot.map(t => (put.oid, id, UserTarget(t, put.targetType))).toList
+    }.groupBy(_._1).mapValues(lst => lst.map { case (_, id, ut) => (id, ut) })
+
 
   object Statements {
+
+    import gem.dao.meta.ProgramIdMeta._
+    import gem.dao.meta.ObservationIndexMeta._
 
     def insert(targetId: Int, targetType: UserTargetType, oid: Observation.Id): Update0 =
       sql"""
         INSERT INTO user_target (
           target_id,
           user_target_type,
+          program_id,
+          observation_index,
           observation_id
         ) VALUES (
           $targetId,
           $targetType,
+          ${oid.pid},
+          ${oid.index},
           $oid
         )
       """.update
@@ -63,18 +78,31 @@ object UserTargetDao {
     def select(id: Int): Query0[ProtoUserTarget] =
       sql"""
         SELECT target_id,
-               user_target_type
+               user_target_type,
+               observation_id
           FROM user_target
          WHERE id = $id
       """.query[ProtoUserTarget]
 
-    def selectAll(oid: Observation.Id): Query0[(Int, ProtoUserTarget)] =
+    def selectObs(oid: Observation.Id): Query0[(Int, ProtoUserTarget)] =
       sql"""
         SELECT id,
                target_id,
-               user_target_type
+               user_target_type,
+               observation_id
           FROM user_target
-         WHERE observation_id = $oid
+         WHERE program_id = ${oid.pid} AND observation_index = ${oid.index}
       """.query[(Int, ProtoUserTarget)]
+
+    def selectProg(pid: Program.Id): Query0[(Int, ProtoUserTarget)] =
+      sql"""
+        SELECT id,
+               target_id,
+               user_target_type,
+               observation_id
+          FROM user_target
+         WHERE program_id = $pid
+      """.query[(Int, ProtoUserTarget)]
+
   }
 }
