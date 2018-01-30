@@ -5,10 +5,12 @@ package gem
 package dao
 
 import cats.implicits._
+
 import doobie._, doobie.implicits._
+
 import gem.config.StaticConfig
 import gem.dao.meta._
-import gem.enum.Instrument
+import gem.enum.{ AsterismType, Instrument }
 import gem.syntax.treemapcompanion._
 import gem.util.Location
 
@@ -124,16 +126,23 @@ object ObservationDao {
 
   object Statements {
 
+    // Workaround until issue #170 is implemented.
+    import doobie.postgres.implicits._
+    implicit val MetaAsterismType: Meta[AsterismType] =
+      pgEnumString("asterism_type", AsterismType.unsafeFromTag, _.tag)
+
     def insert(oid: Observation.Id, o: Observation[_, StaticConfig, _]): Update0 =
       sql"""
         INSERT INTO observation (observation_id,
                                 program_id,
                                 observation_index,
+                                asterism_type,
                                 title,
                                 instrument)
               VALUES (${oid},
                       ${oid.pid},
                       ${oid.index},
+                      ${(if (o.staticConfig.instrument == Instrument.Ghost) AsterismType.GhostDualTarget else AsterismType.SingleTarget): AsterismType},
                       ${o.title},
                       ${o.staticConfig.instrument: Instrument})
       """.update

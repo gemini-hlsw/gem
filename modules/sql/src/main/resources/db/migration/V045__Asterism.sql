@@ -10,8 +10,8 @@ INSERT INTO e_instrument
 -- Asterism discriminator
 
 CREATE TYPE asterism_type AS ENUM (
+  'GhostDualTarget',
   'SingleTarget'
--- GhostDualTarget, GhostHighResolution in the future
 );
 
 ALTER TYPE asterism_type OWNER TO postgres;
@@ -46,3 +46,20 @@ CREATE TABLE single_target_asterism (
 );
 
 ALTER TABLE single_target_asterism OWNER TO postgres;
+
+
+-- Placeholder Ghost Asterism
+
+CREATE TABLE ghost_dual_target_asterism (
+  program_id        text          NOT NULL,
+  observation_index id_index      NOT NULL,
+  instrument        identifier    NOT NULL,
+  asterism_type     asterism_type NOT NULL,
+  target1_id        integer       NOT NULL  REFERENCES target,
+  target2_id        integer       NOT NULL  REFERENCES target,
+  PRIMARY KEY (program_id, observation_index, instrument),
+  FOREIGN KEY (program_id, observation_index, instrument) REFERENCES observation ON DELETE CASCADE,
+  FOREIGN KEY (program_id, observation_index, asterism_type) REFERENCES observation (program_id, observation_index, asterism_type) ON DELETE CASCADE,
+  CONSTRAINT is_ghost_dual_target CHECK (asterism_type = 'GhostDualTarget'),
+  CONSTRAINT is_ghost CHECK (instrument = 'Ghost')
+);
