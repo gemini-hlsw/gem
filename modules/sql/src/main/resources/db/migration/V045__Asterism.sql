@@ -29,6 +29,7 @@ ALTER TABLE observation
 ALTER TABLE observation
   ADD UNIQUE (program_id, observation_index, asterism_type);
 
+
 -- Single target asterism can have any instrument except GHOST but it should
 -- match the observation.
 

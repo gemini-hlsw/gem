@@ -126,10 +126,7 @@ object ObservationDao {
 
   object Statements {
 
-    // Workaround until issue #170 is implemented.
-    import doobie.postgres.implicits._
-    implicit val MetaAsterismType: Meta[AsterismType] =
-      pgEnumString("asterism_type", AsterismType.unsafeFromTag, _.tag)
+    import AsterismTypeMeta._
 
     def insert(oid: Observation.Id, o: Observation[_, StaticConfig, _]): Update0 =
       sql"""
