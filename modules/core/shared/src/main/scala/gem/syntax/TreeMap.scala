@@ -27,4 +27,17 @@ trait ToTreeMapCompanionOps {
     new TreeMapCompanionOps(c)
 }
 
-object treemapcompanion extends ToTreeMapCompanionOps
+final class TreeMapOps[A, B](val self: TreeMap[A, B]) extends AnyVal {
+
+  def merge[C, D](that: Map[A, C])(f: (B, Option[C]) => D)(implicit ev: Ordering[A]): TreeMap[A, D] =
+    self.foldLeft(TreeMap.empty[A, D]) { case (m, (a, b)) =>
+      m.updated(a, f(b, that.get(a)))
+    }
+}
+
+trait ToTreeMapOps {
+  implicit def ToTreeMapOps[A: Ordering, B](m: TreeMap[A, B]): TreeMapOps[A, B] =
+    new TreeMapOps(m)
+}
+
+object treemap extends ToTreeMapCompanionOps with ToTreeMapOps

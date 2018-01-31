@@ -11,7 +11,7 @@ import doobie._, doobie.implicits._
 import gem.config.StaticConfig
 import gem.dao.meta._
 import gem.enum.{ AsterismType, Instrument }
-import gem.syntax.treemapcompanion._
+import gem.syntax.treemap._
 import gem.util.Location
 
 import scala.collection.immutable.TreeMap
@@ -83,12 +83,9 @@ object ObservationDao {
     ts: Map[I, TargetEnvironment]
   ): TreeMap[I, Observation[TargetEnvironment, S, D]] =
 
-    os.foldLeft(TreeMap.empty[I, Observation[TargetEnvironment, S, D]]) {
-      case (m, (i, o)) =>
-        m.updated(i, Observation.targetsFunctor.as(
-          o, ts.getOrElse(i, TargetEnvironment.empty)
-        ))
-    }
+    os.merge(ts)((o, oe) => oe.fold(o) { e =>
+      Observation.targetsFunctor.as(o, ts.getOrElse(i, TargetEnvironment.empty))
+    })
 
   /** Construct a program to select all observations for the specified science
     * program, with the instrument but no targets nor steps.

@@ -8,7 +8,7 @@ import gem.arb._
 import gem.config.{ DynamicConfig, GcalConfig, TelescopeConfig }
 import gem.enum.{Instrument, SmartGcalType}
 import gem.math.Offset
-import gem.syntax.treemapcompanion._
+import gem.syntax.treemap._
 import gem.util.Location
 import org.scalacheck._
 import org.scalacheck.Gen._

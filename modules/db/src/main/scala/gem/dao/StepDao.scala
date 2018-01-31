@@ -12,7 +12,7 @@ import gem.config.GcalConfig.GcalLamp
 import gem.dao.meta._
 import gem.enum._
 import gem.math.Offset
-import gem.syntax.treemapcompanion._
+import gem.syntax.treemap._
 import java.time.Duration
 import scala.collection.immutable.TreeMap
 
