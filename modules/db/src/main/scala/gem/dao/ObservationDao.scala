@@ -39,7 +39,7 @@ object ObservationDao {
   /** Construct a program to select the specified observation, with the
     * instrument but not targets nor steps.
     */
-  def selectFlat(id: Observation.Id): ConnectionIO[Observation[Unit, Instrument, Nothing]] =
+  def selectFlat(id: Observation.Id): ConnectionIO[Observation[Option[AsterismType], Instrument, Nothing]] =
     Statements.selectFlat(id).unique
 
   /** Construct a program to select the specified observation, with the
@@ -48,13 +48,13 @@ object ObservationDao {
   def selectTargets(id: Observation.Id): ConnectionIO[Observation[TargetEnvironment, Instrument, Nothing]] =
     for {
       o <- selectFlat(id)
-      t <- TargetEnvironmentDao.selectObs(id, None)
+      t <- TargetEnvironmentDao.selectObs(id, o.targets)
     } yield Observation.targetsFunctor.as(o, t)
 
   /** Construct a program to select the specified observation, with static
     * config but not targets nor steps.
     */
-  def selectStatic(id: Observation.Id): ConnectionIO[Observation[Unit, StaticConfig, Nothing]] =
+  def selectStatic(id: Observation.Id): ConnectionIO[Observation[Option[AsterismType], StaticConfig, Nothing]] =
     for {
       obs <- selectFlat(id)
       sc  <- StaticConfigDao.select(id, obs.staticConfig)
@@ -63,7 +63,7 @@ object ObservationDao {
   /** Construct a program to select the specified observation, with static
     * config and steps but not targets.
     */
-  def selectConfig(id: Observation.Id): ConnectionIO[Observation[Unit, StaticConfig, Step[DynamicConfig]]] =
+  def selectConfig(id: Observation.Id): ConnectionIO[Observation[Option[AsterismType], StaticConfig, Step[DynamicConfig]]] =
     for {
       on <- selectStatic(id)
       ss <- StepDao.selectAll(id)
@@ -75,7 +75,7 @@ object ObservationDao {
   def select(id: Observation.Id): ConnectionIO[Observation.Full] =
     for {
       o <- selectConfig(id)
-      t <- TargetEnvironmentDao.selectObs(id, None)
+      t <- TargetEnvironmentDao.selectObs(id, o.targets)
     } yield Observation.targetsFunctor.as(o, t)
 
   /** Construct a program to select the all obseravation ids for the specified
@@ -98,7 +98,7 @@ object ObservationDao {
   /** Construct a program to select all observations for the specified science
     * program, with the instrument but no targets nor steps.
     */
-  def selectAllFlat(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Unit, Instrument, Nothing]]] =
+  def selectAllFlat(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Option[AsterismType], Instrument, Nothing]]] =
     Statements.selectAllFlat(pid).list.map(lst => TreeMap.fromList(lst))
 
   /** Construct a program to select all observations for the specified science
@@ -106,14 +106,15 @@ object ObservationDao {
     */
   def selectAllTarget(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[TargetEnvironment, Instrument, Nothing]]] =
     for {
-      m  <- selectAllFlat(pid)
-      ts <- TargetEnvironmentDao.selectProg(pid, Set.empty)
-    } yield merge(m, ts)
+      os  <- selectAllFlat(pid)
+      as  = os.values.toList.flatMap(_.targets.toList).toSet // All asterism types in the program
+      ts <- TargetEnvironmentDao.selectProg(pid, as)
+    } yield merge(os, ts)
 
   /** Construct a program to select all observations for the specified science
     * program, with the static component but no targets nor steps.
     */
-  def selectAllStatic(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Unit, StaticConfig, Nothing]]] =
+  def selectAllStatic(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Option[AsterismType], StaticConfig, Nothing]]] =
     for {
       ids <- selectIds(pid)
       oss <- ids.traverse(selectStatic)
@@ -122,7 +123,7 @@ object ObservationDao {
   /** Construct a program to select all observations for the specified science
     * program, with static component and steps but not targets.
     */
-  def selectAllConfig(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Unit, StaticConfig, Step[DynamicConfig]]]] =
+  def selectAllConfig(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Option[AsterismType], StaticConfig, Step[DynamicConfig]]]] =
     for {
       ids <- selectIds(pid)
       oss <- ids.traverse(selectConfig)
@@ -134,14 +135,15 @@ object ObservationDao {
   def selectAll(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation.Full]] =
     for {
       os <- selectAllConfig(pid)
-      ts <- TargetEnvironmentDao.selectProg(pid, Set.empty)
+      as  = os.values.toList.flatMap(_.targets.toList).toSet // All asterism types in the program
+      ts <- TargetEnvironmentDao.selectProg(pid, as)
     } yield merge(os, ts)
 
   object Statements {
 
     import AsterismTypeMeta._
 
-    def insert(oid: Observation.Id, o: Observation[_, StaticConfig, _]): Update0 =
+    def insert(oid: Observation.Id, o: Observation[TargetEnvironment, StaticConfig, _]): Update0 =
       sql"""
         INSERT INTO observation (observation_id,
                                 program_id,
@@ -152,7 +154,7 @@ object ObservationDao {
               VALUES (${oid},
                       ${oid.pid},
                       ${oid.index},
-                      ${(if (o.staticConfig.instrument == Instrument.Ghost) AsterismType.GhostDualTarget else AsterismType.SingleTarget): AsterismType},
+                      ${o.targets.asterism.map(_.asterismType)},
                       ${o.title},
                       ${o.staticConfig.instrument: Instrument})
       """.update
@@ -164,23 +166,23 @@ object ObservationDao {
          WHERE program_id = $pid
       """.query[Observation.Id]
 
-    def selectFlat(id: Observation.Id): Query0[Observation[Unit, Instrument, Nothing]] =
+    def selectFlat(id: Observation.Id): Query0[Observation[Option[AsterismType], Instrument, Nothing]] =
       sql"""
-        SELECT title, instrument
+        SELECT title, asterism_type, instrument
           FROM observation
          WHERE observation_id = ${id}
-      """.query[(String, Instrument)]
-        .map { case (t, i) => Observation(t, (), i, Nil) }
+      """.query[(String, Option[AsterismType], Instrument)]
+        .map { case (t, a, i) => Observation(t, a, i, Nil) }
 
-    def selectAllFlat(pid: Program.Id): Query0[(Observation.Index, Observation[Unit, Instrument, Nothing])] =
+    def selectAllFlat(pid: Program.Id): Query0[(Observation.Index, Observation[Option[AsterismType], Instrument, Nothing])] =
       sql"""
-        SELECT observation_index, title, instrument
+        SELECT observation_index, title, asterism_type, instrument
           FROM observation
          WHERE program_id = ${pid}
       ORDER BY observation_index
-      """.query[(Short, String, Instrument)]
-        .map { case (n, t, i) =>
-          (Observation.Index.unsafeFromShort(n), Observation(t, (), i, Nil))
+      """.query[(Short, String, Option[AsterismType], Instrument)]
+        .map { case (n, t, a, i) =>
+          (Observation.Index.unsafeFromShort(n), Observation(t, a, i, Nil))
         }
 
   }

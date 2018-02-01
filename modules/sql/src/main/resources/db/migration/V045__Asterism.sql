@@ -20,7 +20,7 @@ ALTER TYPE asterism_type OWNER TO postgres;
 -- Add asterism_type to observation.
 
 ALTER TABLE observation
-  ADD asterism_type asterism_type NOT NULL;
+  ADD asterism_type asterism_type;
 
 -- Add an admittedly redundant unique constraint so that it asterism type can
 -- serve as a foreign key referential integrity constraint in the asterism
