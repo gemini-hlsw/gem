@@ -196,7 +196,7 @@ object Decoders {
         // a <- asterism
         // g <- guideEnvironment
         uts <- validTargets(n \? "&userTargets" \* "&userTarget").decode[UserTarget]
-      } yield TargetEnvironment(TreeSet.fromList(uts))
+      } yield TargetEnvironment(None, TreeSet.fromList(uts))
     }
   }
 

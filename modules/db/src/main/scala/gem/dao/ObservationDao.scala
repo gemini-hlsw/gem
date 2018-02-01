@@ -8,7 +8,7 @@ import cats.implicits._
 
 import doobie._, doobie.implicits._
 
-import gem.config.StaticConfig
+import gem.config.{ DynamicConfig, StaticConfig }
 import gem.dao.meta._
 import gem.enum.{ AsterismType, Instrument }
 import gem.syntax.treemap._
@@ -48,7 +48,7 @@ object ObservationDao {
   def selectTargets(id: Observation.Id): ConnectionIO[Observation[TargetEnvironment, Instrument, Nothing]] =
     for {
       o <- selectFlat(id)
-      t <- TargetEnvironmentDao.selectObs(id)
+      t <- TargetEnvironmentDao.selectObs(id, None)
     } yield Observation.targetsFunctor.as(o, t)
 
   /** Construct a program to select the specified observation, with static
@@ -60,15 +60,23 @@ object ObservationDao {
       sc  <- StaticConfigDao.select(id, obs.staticConfig)
     } yield Observation.staticConfigFunctor.as(obs, sc)
 
+  /** Construct a program to select the specified observation, with static
+    * config and steps but not targets.
+    */
+  def selectConfig(id: Observation.Id): ConnectionIO[Observation[Unit, StaticConfig, Step[DynamicConfig]]] =
+    for {
+      on <- selectStatic(id)
+      ss <- StepDao.selectAll(id)
+    } yield on.copy(steps = ss.values.toList)
+
   /** Construct a program to select a fully specified observation, with targets,
     * static config and steps.
     */
   def select(id: Observation.Id): ConnectionIO[Observation.Full] =
     for {
-      on <- selectStatic(id)
-      ss <- StepDao.selectAll(id)
-      t  <- TargetEnvironmentDao.selectObs(id)
-    } yield Observation.targetsFunctor.as(on.copy(steps = ss.values.toList), t)
+      o <- selectConfig(id)
+      t <- TargetEnvironmentDao.selectObs(id, None)
+    } yield Observation.targetsFunctor.as(o, t)
 
   /** Construct a program to select the all obseravation ids for the specified
     * science program.
@@ -83,9 +91,9 @@ object ObservationDao {
     ts: Map[I, TargetEnvironment]
   ): TreeMap[I, Observation[TargetEnvironment, S, D]] =
 
-    os.merge(ts)((o, oe) => oe.fold(o) { e =>
-      Observation.targetsFunctor.as(o, ts.getOrElse(i, TargetEnvironment.empty))
-    })
+    os.mergeMatchingKeys(ts)((o, t) =>
+      Observation.targetsFunctor.as(o, t.getOrElse(TargetEnvironment.empty))
+    )
 
   /** Construct a program to select all observations for the specified science
     * program, with the instrument but no targets nor steps.
@@ -99,7 +107,7 @@ object ObservationDao {
   def selectAllTarget(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[TargetEnvironment, Instrument, Nothing]]] =
     for {
       m  <- selectAllFlat(pid)
-      ts <- TargetEnvironmentDao.selectProg(pid)
+      ts <- TargetEnvironmentDao.selectProg(pid, Set.empty)
     } yield merge(m, ts)
 
   /** Construct a program to select all observations for the specified science
@@ -112,14 +120,22 @@ object ObservationDao {
     } yield TreeMap.fromList(ids.map(_.index).zip(oss))
 
   /** Construct a program to select all observations for the specified science
+    * program, with static component and steps but not targets.
+    */
+  def selectAllConfig(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation[Unit, StaticConfig, Step[DynamicConfig]]]] =
+    for {
+      ids <- selectIds(pid)
+      oss <- ids.traverse(selectConfig)
+    } yield TreeMap.fromList(ids.map(_.index).zip(oss))
+
+  /** Construct a program to select all observations for the specified science
     * program, with its targets, static component and steps.
     */
   def selectAll(pid: Program.Id): ConnectionIO[TreeMap[Observation.Index, Observation.Full]] =
     for {
-      ids <- selectIds(pid)
-      oss <- ids.traverse(select)
-      ts  <- TargetEnvironmentDao.selectProg(pid)
-    } yield merge(TreeMap.fromList(ids.map(_.index).zip(oss)), ts)
+      os <- selectAllConfig(pid)
+      ts <- TargetEnvironmentDao.selectProg(pid, Set.empty)
+    } yield merge(os, ts)
 
   object Statements {
 

@@ -23,7 +23,7 @@ trait ArbTargetEnvironment {
       for {
         len <- choose(0, 10)
         uts <- listOfN(len, arbitrary[UserTarget])
-      } yield TargetEnvironment(TreeSet.fromList(uts))
+      } yield TargetEnvironment(None, TreeSet.fromList(uts))
     }
 
   implicit val cogTargetEnvironment: Cogen[TargetEnvironment] =
