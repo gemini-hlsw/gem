@@ -39,7 +39,7 @@ class ObservationDaoSpec extends PropSpec with PropertyChecks with DaoTest {
       // Take the generated observation, remove the targets and steps, and map
       // the the static config to the instrument.
       val expected = Observation.staticConfigFunctor.map(
-                       Observation.targetsFunctor.void(obsIn)
+                       Observation.targetsFunctor.map(obsIn)(_.asterism.map(_.asterismType))
                      )(_.instrument).copy(steps = Nil)
 
       obsOut shouldEqual expected // obsIn.leftMap(_.instrument).copy(steps = Nil)
@@ -59,7 +59,7 @@ class ObservationDaoSpec extends PropSpec with PropertyChecks with DaoTest {
 
       // Take the generated observation and remove the targets and steps
       val expected = Observation.targetsFunctor
-                       .void(obsIn)
+                       .map(obsIn)(_.asterism.map(_.asterismType))
                        .copy(steps = Nil)
 
       obsOut shouldEqual expected

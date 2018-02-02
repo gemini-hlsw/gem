@@ -4,6 +4,7 @@
 package gem
 package arb
 
+import gem.enum.Instrument
 import gem.syntax.treesetcompanion._
 
 import org.scalacheck._
@@ -16,18 +17,27 @@ import scala.collection.immutable.TreeSet
 
 trait ArbTargetEnvironment {
 
+  import ArbAsterism._
+  import ArbEnumerated._
   import ArbUserTarget._
 
   implicit val arbTargetEnvironment: Arbitrary[TargetEnvironment] =
     Arbitrary {
       for {
-        len <- choose(0, 10)
-        uts <- listOfN(len, arbitrary[UserTarget])
-      } yield TargetEnvironment(None, TreeSet.fromList(uts))
+        i <- arbitrary[Instrument]
+        e <- genTargetEnvironment(i)
+      } yield e
     }
 
+  def genTargetEnvironment(i: Instrument): Gen[TargetEnvironment] =
+    for {
+      a <- frequency((9, genAsterism(i).map(Option(_))), (1, const(Option.empty[Asterism])))
+      n <- choose(0, 10)
+      u <- listOfN(n, arbitrary[UserTarget]).map(us => TreeSet.fromList(us))
+    } yield TargetEnvironment(a, u)
+
   implicit val cogTargetEnvironment: Cogen[TargetEnvironment] =
-    Cogen[List[UserTarget]].contramap(_.userTargets.toList)
+    Cogen[(Option[Asterism], List[UserTarget])].contramap(e => (e.asterism, e.userTargets.toList))
 }
 
 object ArbTargetEnvironment extends ArbTargetEnvironment
