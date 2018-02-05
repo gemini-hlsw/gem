@@ -5,7 +5,7 @@ package gem
 
 import cats.Eq
 import cats.data.NonEmptyList
-import gem.enum.{AsterismType, Instrument}
+import gem.enum.Instrument
 import monocle.macros.Lenses
 
 
@@ -51,12 +51,6 @@ object Asterism {
     implicit val EqGhostDualTarget: Eq[GhostDualTarget] =
       Eq.fromUniversalEquals
   }
-
-  def typeOf(a: Asterism): AsterismType =
-    a match {
-      case _: SingleTarget[_] => AsterismType.SingleTarget
-      case _: GhostDualTarget => AsterismType.GhostDualTarget
-    }
 
   implicit val EqAsterism: Eq[Asterism] =
     Eq.fromUniversalEquals
