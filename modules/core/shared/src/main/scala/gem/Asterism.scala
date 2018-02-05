@@ -5,17 +5,13 @@ package gem
 
 import cats.Eq
 import cats.data.NonEmptyList
-
-import gem.enum.{ AsterismType, Instrument }
-
+import gem.enum.{AsterismType, Instrument}
 import monocle.macros.Lenses
 
 
 sealed trait Asterism extends Product with Serializable {
 
   type I <: Instrument with Singleton
-
-  def asterismType: AsterismType
 
   def instrument: Instrument
 
@@ -33,9 +29,6 @@ object Asterism {
 
   @Lenses final case class SingleTarget[I0 <: Instrument with Singleton](target: Target, override val instrument: I0) extends Asterism.Impl(instrument) {
 
-    override def asterismType: AsterismType =
-      AsterismType.SingleTarget
-
     override def targets: NonEmptyList[Target] =
       NonEmptyList.one(target)
 
@@ -49,9 +42,6 @@ object Asterism {
 
   @Lenses final case class GhostDualTarget(ifu1: Target, ifu2: Target) extends Asterism.Impl(Instrument.Ghost) {
 
-    override def asterismType: AsterismType =
-      AsterismType.GhostDualTarget
-
     override def targets: NonEmptyList[Target] =
       NonEmptyList.of(ifu1, ifu2)
   }
@@ -62,6 +52,13 @@ object Asterism {
       Eq.fromUniversalEquals
   }
 
+  def typeOf(a: Asterism): AsterismType =
+    a match {
+      case _: SingleTarget[_] => AsterismType.SingleTarget
+      case _: GhostDualTarget => AsterismType.GhostDualTarget
+    }
+
   implicit val EqAsterism: Eq[Asterism] =
     Eq.fromUniversalEquals
+
 }

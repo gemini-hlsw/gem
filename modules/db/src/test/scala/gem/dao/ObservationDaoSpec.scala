@@ -5,7 +5,7 @@ package gem.dao
 
 import cats.implicits._
 import doobie.implicits._
-import gem.Observation
+import gem.{ Asterism, Observation }
 import org.scalatest._
 import org.scalatest.prop._
 import org.scalatest.Matchers._
@@ -39,7 +39,7 @@ class ObservationDaoSpec extends PropSpec with PropertyChecks with DaoTest {
       // Take the generated observation, remove the targets and steps, and map
       // the the static config to the instrument.
       val expected = Observation.staticConfigFunctor.map(
-                       Observation.targetsFunctor.map(obsIn)(_.asterism.map(_.asterismType))
+                       Observation.targetsFunctor.map(obsIn)(_.asterism.map(Asterism.typeOf))
                      )(_.instrument).copy(steps = Nil)
 
       obsOut shouldEqual expected // obsIn.leftMap(_.instrument).copy(steps = Nil)
@@ -59,7 +59,7 @@ class ObservationDaoSpec extends PropSpec with PropertyChecks with DaoTest {
 
       // Take the generated observation and remove the targets and steps
       val expected = Observation.targetsFunctor
-                       .map(obsIn)(_.asterism.map(_.asterismType))
+                       .map(obsIn)(_.asterism.map(Asterism.typeOf))
                        .copy(steps = Nil)
 
       obsOut shouldEqual expected

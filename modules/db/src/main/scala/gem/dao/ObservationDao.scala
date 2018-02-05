@@ -5,9 +5,7 @@ package gem
 package dao
 
 import cats.implicits._
-
 import doobie._, doobie.implicits._
-
 import gem.config.{ DynamicConfig, StaticConfig }
 import gem.dao.meta._
 import gem.enum.{ AsterismType, Instrument }
@@ -154,7 +152,7 @@ object ObservationDao {
               VALUES (${oid},
                       ${oid.pid},
                       ${oid.index},
-                      ${o.targets.asterism.map(_.asterismType)},
+                      ${o.targets.asterism.map(Asterism.typeOf)},
                       ${o.title},
                       ${o.staticConfig.instrument: Instrument})
       """.update
