@@ -8,11 +8,12 @@ import cats.data.NonEmptyList
 
 import gem.enum.{ AsterismType, Instrument }
 
-import monocle.Prism
-import monocle.macros.{ Lenses, GenPrism }
+import monocle.macros.Lenses
 
 
 sealed trait Asterism extends Product with Serializable {
+
+  type I <: Instrument with Singleton
 
   def asterismType: AsterismType
 
@@ -22,9 +23,15 @@ sealed trait Asterism extends Product with Serializable {
 
 }
 
-object Asterism extends AsterismOptics {
+object Asterism {
 
-  @Lenses final case class SingleTarget(target: Target, instrument: Instrument) extends Asterism {
+  type Aux[I0] = Asterism { type I = I0 }
+
+  sealed abstract class Impl[I0 <: Instrument with Singleton](val instrument: I0) extends Asterism {
+    type I = I0
+  }
+
+  @Lenses final case class SingleTarget[I0 <: Instrument with Singleton](target: Target, override val instrument: I0) extends Asterism.Impl(instrument) {
 
     override def asterismType: AsterismType =
       AsterismType.SingleTarget
@@ -36,17 +43,14 @@ object Asterism extends AsterismOptics {
 
   @SuppressWarnings(Array("org.wartremover.warts.PublicInference"))
   object SingleTarget {
-    implicit val EqSingleTarget: Eq[SingleTarget] =
+    implicit def EqSingleTarget[I <: Instrument with Singleton]: Eq[SingleTarget[I]] =
       Eq.fromUniversalEquals
   }
 
-  @Lenses final case class GhostDualTarget(ifu1: Target, ifu2: Target) extends Asterism {
+  @Lenses final case class GhostDualTarget(ifu1: Target, ifu2: Target) extends Asterism.Impl(Instrument.Ghost) {
 
     override def asterismType: AsterismType =
       AsterismType.GhostDualTarget
-
-    override def instrument: Instrument =
-      Instrument.Ghost
 
     override def targets: NonEmptyList[Target] =
       NonEmptyList.of(ifu1, ifu2)
@@ -60,14 +64,4 @@ object Asterism extends AsterismOptics {
 
   implicit val EqAsterism: Eq[Asterism] =
     Eq.fromUniversalEquals
-}
-
-trait AsterismOptics { self: Asterism.type =>
-
-  val singleTarget: Prism[Asterism, Asterism.SingleTarget] =
-    GenPrism[Asterism, Asterism.SingleTarget]
-
-  val ghostDualTarget: Prism[Asterism, Asterism.GhostDualTarget] =
-    GenPrism[Asterism, Asterism.GhostDualTarget]
-
 }

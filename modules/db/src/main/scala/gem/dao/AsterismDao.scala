@@ -22,7 +22,7 @@ object AsterismDao {
 
   def insert(oid: Observation.Id, a: Asterism): ConnectionIO[Unit] =
     a match {
-      case a: Asterism.SingleTarget    => insertSingleTarget(oid, a)
+      case a: Asterism.SingleTarget[_] => insertSingleTarget(oid, a)
       case a: Asterism.GhostDualTarget => insertGhostDualTarget(oid, a)
     }
 
@@ -38,7 +38,7 @@ object AsterismDao {
       case AsterismType.GhostDualTarget => TreeMap.empty[Observation.Index, Asterism].pure[ConnectionIO]
     }
 
-  def insertSingleTarget(oid: Observation.Id, a: Asterism.SingleTarget): ConnectionIO[Unit] =
+  def insertSingleTarget[I <: Instrument with Singleton](oid: Observation.Id, a: Asterism.SingleTarget[I]): ConnectionIO[Unit] =
     for {
       t <- TargetDao.insert(a.target)
       _ <- Statements.SingleTarget.insert(oid, t, a.instrument).run.void

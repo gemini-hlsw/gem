@@ -10,7 +10,8 @@ import gem.syntax.treesetcompanion._
 import org.scalacheck._
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
-import org.scalacheck.Cogen._
+// Grim Defeat
+//import org.scalacheck.Cogen._
 
 import scala.collection.immutable.TreeSet
 
@@ -36,8 +37,9 @@ trait ArbTargetEnvironment {
       u <- listOfN(n, arbitrary[UserTarget]).map(us => TreeSet.fromList(us))
     } yield TargetEnvironment(a, u)
 
-  implicit val cogTargetEnvironment: Cogen[TargetEnvironment] =
-    Cogen[(Option[Asterism], List[UserTarget])].contramap(e => (e.asterism, e.userTargets.toList))
+  // Grim Defeat
+//  implicit val cogTargetEnvironment: Cogen[TargetEnvironment] =
+//    Cogen[(Option[Asterism], List[UserTarget])].contramap(e => (e.asterism, e.userTargets.toList))
 }
 
 object ArbTargetEnvironment extends ArbTargetEnvironment
