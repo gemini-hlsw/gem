@@ -10,36 +10,32 @@ import gem.syntax.treesetcompanion._
 import org.scalacheck._
 import org.scalacheck.Gen._
 import org.scalacheck.Arbitrary._
-// Grim Defeat
-//import org.scalacheck.Cogen._
 
 import scala.collection.immutable.TreeSet
 
-
 trait ArbTargetEnvironment {
-
   import ArbAsterism._
   import ArbEnumerated._
   import ArbUserTarget._
 
-  implicit val arbTargetEnvironment: Arbitrary[TargetEnvironment] =
+  implicit def arbTargetEnvironment: Arbitrary[TargetEnvironment] =
     Arbitrary {
       for {
         i <- arbitrary[Instrument]
-        e <- genTargetEnvironment(i)
+        e <- genTargetEnvironment[i.type]
       } yield e
     }
 
-  def genTargetEnvironment(i: Instrument): Gen[TargetEnvironment] =
+  def genTargetEnvironment[I <: Instrument with Singleton: ValueOf]: Gen[TargetEnvironment] =
     for {
-      a <- frequency((9, genAsterism(i).map(Option(_))), (1, const(Option.empty[Asterism])))
+      a <- frequency((9, genAsterism[I].map(Option(_))), (1, const(Option.empty[Asterism])))
       n <- choose(0, 10)
       u <- listOfN(n, arbitrary[UserTarget]).map(us => TreeSet.fromList(us))
     } yield TargetEnvironment(a, u)
 
-  // Grim Defeat
-//  implicit val cogTargetEnvironment: Cogen[TargetEnvironment] =
-//    Cogen[(Option[Asterism], List[UserTarget])].contramap(e => (e.asterism, e.userTargets.toList))
+  implicit val cogTargetEnvironment: Cogen[TargetEnvironment] =
+    Cogen[(Option[Asterism], List[UserTarget])].contramap(e => (e.asterism, e.userTargets.toList))
+
 }
 
 object ArbTargetEnvironment extends ArbTargetEnvironment

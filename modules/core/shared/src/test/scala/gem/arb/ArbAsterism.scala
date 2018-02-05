@@ -15,56 +15,32 @@ trait ArbAsterism {
   import ArbEnumerated._
   import ArbTarget._
 
-  // Grim Defeat
-//  implicit val arbSingleTarget: Arbitrary[Asterism.SingleTarget[Instrument with Singleton]] =
-//    Arbitrary {
-//      for {
-//        t <- arbitrary[Target]
-//        i <- Gen.oneOf(Instrument.all.filterNot(_ === Instrument.Ghost))
-//      } yield Asterism.SingleTarget[Instrument with Singleton](t, i: Instrument with Singleton)
-//    }
+  def genSingleTarget[I <: Instrument with Singleton: ValueOf]: Gen[Asterism.SingleTarget[I]] =
+    arbitrary[Target].map(Asterism.SingleTarget(_, valueOf[I]))
 
-  private def genSingleTarget(i: Instrument): Gen[Asterism] =
-    arbitrary[Target].map(Asterism.SingleTarget(_, i))
+  val genGhostDualTarget: Gen[Asterism.GhostDualTarget] =
+    for {
+      t1 <- arbitrary[Target]
+      t2 <- arbitrary[Target]
+    } yield Asterism.GhostDualTarget(t1, t2)
 
-  implicit val arbGhostDualTarget: Arbitrary[Asterism.GhostDualTarget] =
-    Arbitrary {
-      for {
-        t1 <- arbitrary[Target]
-        t2 <- arbitrary[Target]
-      } yield Asterism.GhostDualTarget(t1, t2)
-    }
-
-  def genAsterism(i: Instrument): Gen[Asterism] =
-    i match {
-      case Instrument.Ghost => arbitrary[Asterism.GhostDualTarget]
-      case _                => genSingleTarget(i)
+  def genAsterism[I <: Instrument with Singleton: ValueOf]: Gen[Asterism] =
+    valueOf[I] match {
+      case Instrument.Ghost => genGhostDualTarget
+      case i                => genSingleTarget[I]
     }
 
   implicit val arbAsterism: Arbitrary[Asterism] =
     Arbitrary {
       for {
         i <- arbitrary[Instrument]
-        a <- genAsterism(i)
+        a <- genAsterism[i.type]
       } yield a
     }
 
-  // Grim Defeat
-//  implicit val cogSingleTarget: Cogen[Asterism.SingleTarget[Instrument]] =
-//    Cogen[(Target, Instrument)].contramap(a => (a.target, a.instrument))
+  implicit def cogAsterism: Cogen[Asterism] =
+    Cogen[(List[Target], Instrument)].contramap(a => (a.targets.toList, a.instrument))
 
-//  implicit def cogSingleTarget[I <: Instrument with Singleton]: Cogen[Asterism.SingleTarget[I]] =
-//    Cogen[(Target, I)].contramap(a => (a.target, a.instrument))
-
-  implicit val cogGhostDualTarget: Cogen[Asterism.GhostDualTarget] =
-    Cogen[(Target, Target)].contramap(a => (a.ifu1, a.ifu2))
-
-  // Grim Defeat
-//  implicit def cogAsterism[I <: Instrument with Singleton]: Cogen[Asterism] =
-//    Cogen[(Option[Asterism.SingleTarget[I]], Option[Asterism.GhostDualTarget])].contramap {
-//      case a0: Asterism.SingleTarget[_] => (Some(a0), None)
-//      case a0: Asterism.GhostDualTarget => (None, Some(a0))
-//    }
 }
 
 object ArbAsterism extends ArbAsterism
