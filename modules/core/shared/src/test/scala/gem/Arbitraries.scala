@@ -87,12 +87,12 @@ trait Arbitraries extends gem.config.Arbitraries  {
 
   // Observation
 
-  def genObservationOf[I <: Instrument with Singleton: ValueOf]: Gen[Observation.Full] =
+  def genObservationOf[I <: Instrument with Singleton](i: I): Gen[Observation.Full] =
     for {
       t <- genTitle
-      e <- genTargetEnvironment[I]
-      s <- genStaticConfigOf(valueOf[I])
-      d <- genSequenceOf(valueOf[I])
+      e <- genTargetEnvironment(i)
+      s <- genStaticConfigOf(i)
+      d <- genSequenceOf(i)
     } yield Observation(t, e, s, d)
 
   implicit val arbObservation: Arbitrary[Observation.Full] =
@@ -103,7 +103,7 @@ trait Arbitraries extends gem.config.Arbitraries  {
                Instrument.GmosN,
                Instrument.GmosS
              ) // Add more as they become available
-        o <- genObservationOf[i.type]
+        o <- genObservationOf(i)
       } yield o
     }
 

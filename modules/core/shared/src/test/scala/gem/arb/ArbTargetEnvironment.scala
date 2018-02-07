@@ -22,13 +22,13 @@ trait ArbTargetEnvironment {
     Arbitrary {
       for {
         i <- arbitrary[Instrument]
-        e <- genTargetEnvironment[i.type]
+        e <- genTargetEnvironment(i)
       } yield e
     }
 
-  def genTargetEnvironment[I <: Instrument with Singleton: ValueOf]: Gen[TargetEnvironment] =
+  def genTargetEnvironment[I <: Instrument with Singleton](i: I): Gen[TargetEnvironment] =
     for {
-      a <- frequency((9, genAsterism[I].map(Option(_))), (1, const(Option.empty[Asterism])))
+      a <- frequency((9, genAsterism(i).map(Option(_))), (1, const(Option.empty[Asterism])))
       n <- choose(0, 10)
       u <- listOfN(n, arbitrary[UserTarget]).map(us => TreeSet.fromList(us))
     } yield TargetEnvironment(a, u)

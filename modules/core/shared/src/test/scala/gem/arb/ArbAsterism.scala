@@ -15,8 +15,8 @@ trait ArbAsterism {
   import ArbEnumerated._
   import ArbTarget._
 
-  def genSingleTarget[I <: Instrument with Singleton: ValueOf]: Gen[Asterism.SingleTarget[I]] =
-    arbitrary[Target].map(Asterism.SingleTarget(_, valueOf[I]))
+  def genSingleTarget[I <: Instrument with Singleton](i: I): Gen[Asterism.SingleTarget[I]] =
+    arbitrary[Target].map(Asterism.SingleTarget(_, i))
 
   val genGhostDualTarget: Gen[Asterism.GhostDualTarget] =
     for {
@@ -24,17 +24,17 @@ trait ArbAsterism {
       t2 <- arbitrary[Target]
     } yield Asterism.GhostDualTarget(t1, t2)
 
-  def genAsterism[I <: Instrument with Singleton: ValueOf]: Gen[Asterism] =
-    valueOf[I] match {
+  def genAsterism[I <: Instrument with Singleton](i: I): Gen[Asterism] =
+    i match {
       case Instrument.Ghost => genGhostDualTarget
-      case i                => genSingleTarget[I]
+      case _                => genSingleTarget(i)
     }
 
   implicit val arbAsterism: Arbitrary[Asterism] =
     Arbitrary {
       for {
         i <- arbitrary[Instrument]
-        a <- genAsterism[i.type]
+        a <- genAsterism(i)
       } yield a
     }
 
