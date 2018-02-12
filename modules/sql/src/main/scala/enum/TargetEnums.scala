@@ -17,6 +17,15 @@ object TargetEnums {
         sql"SELECT id, id tag, instrument, short_name, long_name FROM e_guider".query[(String, R)]
       },
 
+      EnumDef.fromQuery("GuideGroupType", "guide group types") {
+        type R = Record.`'tag -> String`.T
+        sql"""
+          SELECT enumlabel x, enumlabel y
+          FROM pg_enum JOIN pg_type ON pg_enum.enumtypid = pg_type.oid
+          WHERE pg_type.typname = 'guide_group_type'
+        """.query[(String, R)]
+      },
+
       EnumDef.fromQuery("AsterismType", "asterism types") {
         type R = Record.`'tag -> String`.T
         sql"""
