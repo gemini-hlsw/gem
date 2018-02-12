@@ -12,6 +12,11 @@ object TargetEnums {
   val enums: List[ConnectionIO[EnumDef]] =
     List(
 
+      EnumDef.fromQuery("Guider", "guider") {
+        type R = Record.`'tag -> String, 'instrument -> Option[Instrument], 'shortName -> String, 'longName -> String`.T
+        sql"SELECT id, id tag, instrument, short_name, long_name FROM e_guider".query[(String, R)]
+      },
+
       EnumDef.fromQuery("AsterismType", "asterism types") {
         type R = Record.`'tag -> String`.T
         sql"""

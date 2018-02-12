@@ -37,6 +37,7 @@ object EnumDef {
     implicit def caseOptionDouble[S] = at[(S, Option[Double])] { _ =>  Option.empty[String] }
     implicit def caseOptionWavelengthNm[S] = at[(S, Option[Wavelength.Nm])] { _ => Some("gem.math.Wavelength") }
     implicit def caseOptionWavelengthUm[S] = at[(S, Option[Wavelength.Um])] { _ => Some("gem.math.Wavelength") }
+    implicit def caseOptionInstrument[T <: Symbol, S] = at[(S, Option[Instrument])] { _ => Option.empty[String] }
     implicit def caseMagnitudeSystem[S] = at[(S, MagnitudeSystem)] { _ => Option.empty[String] }
     implicit def caseMagnitudeBand[S] = at[(S, MagnitudeBand)] { _ => Option.empty[String] }
     implicit def caseOptionMagnitudeBand[S] = at[(S, Option[MagnitudeBand])] { _ => Option.empty[String] }
@@ -71,6 +72,8 @@ object EnumDef {
     implicit def caseOptionWavelengthNm[S <: Symbol] = at[(S, Option[Wavelength.Nm])] { case (s, _) => s"  val ${s.name}: Option[Wavelength]" }
     implicit def caseOptionWavelengthUm[S <: Symbol] = at[(S, Option[Wavelength.Um])] { case (s, _) => s"  val ${s.name}: Option[Wavelength]" }
 
+    implicit def caseOptionInstrument[S <: Symbol] = at[(S, Option[Instrument])   ] { case (s, _) => s"  val ${s.name}: Option[Instrument]" }
+
     implicit def caseMagnitudeSystem    [S <: Symbol] = at[(S, MagnitudeSystem)      ] { case (s, _) => s"  val ${s.name}: MagnitudeSystem" }
     implicit def caseMagnitudeBand      [S <: Symbol] = at[(S, MagnitudeBand)        ] { case (s, _) => s"  val ${s.name}: MagnitudeBand" }
     implicit def caseOptionMagnitudeBand[S <: Symbol] = at[(S, Option[MagnitudeBand])] { case (s, _) => s"  val ${s.name}: Option[MagnitudeBand]" }
@@ -103,6 +106,8 @@ object EnumDef {
     implicit val caseOptionArcseconds = at[Option[Arcseconds]](a => a.fold("Option.empty[Angle]")(aʹ => s"Some(Angle.fromDoubleArcseconds(${aʹ.toArcsecs}))"))
     implicit val caseOptionDegrees    = at[Option[Degrees]   ](a => a.fold("Option.empty[Angle]")(aʹ => s"Some(Angle.fromDoubleDegrees(${aʹ.toDegrees}))"))
     implicit val caseOptionDouble     = at[Option[Double]    ](a => a.fold("None")(aʹ => s"Some($aʹ)"))
+
+    implicit val caseOptionInstrument = at[Option[Instrument]](a => a.fold("None")(aʹ => s"Some(Instrument.${aʹ.id})"))
 
     implicit val caseMagnitudeBand       = at[MagnitudeBand        ](a => s"MagnitudeBand.${a.id}")
     implicit val caseOptionMagnitudeBand = at[Option[MagnitudeBand]](a => a.fold("None")(aʹ => s"Some(MagnitudeBand.${aʹ.id})"))
