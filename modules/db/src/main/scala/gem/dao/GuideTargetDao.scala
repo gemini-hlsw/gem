@@ -15,7 +15,7 @@ import doobie.implicits._
 object GuideTargetDao {
 
   final case class ProtoGuideTarget(
-    id: Int,
+    id: GuideTarget.Id,
     groupId: Int,
     targetId: Target.Id,
     guider: Guider,
@@ -26,14 +26,16 @@ object GuideTargetDao {
       TargetDao.select(targetId).map { _.map(GuideTarget(_, guider)) }
   }
 
-  def insert(gid: Int, oid: Observation.Id, guideTarget: GuideTarget, instrument: Instrument): ConnectionIO[Int] =
+  def insert(gid: Int, oid: Observation.Id, guideTarget: GuideTarget, instrument: Instrument): ConnectionIO[GuideTarget.Id] =
     for {
       t <- TargetDao.insert(guideTarget.target)
-      i <- Statements.insert(gid, t, guideTarget.guider, oid, instrument).withUniqueGeneratedKeys[Int]("id")
+      i <- Statements.insert(gid, t, guideTarget.guider, oid, instrument)
+                     .withUniqueGeneratedKeys[Int]("id")
+                     .map(GuideTarget.Id(_))
     } yield i
 
   /** Selects the single `GuideTarget` associated with the given id, if any. */
-  def select(id: Int): ConnectionIO[Option[GuideTarget]] =
+  def select(id: GuideTarget.Id): ConnectionIO[Option[GuideTarget]] =
     for {
       g <- Statements.select(id).option
       t <- g.fold(Option.empty[GuideTarget].pure[ConnectionIO]) { _.toGuideTarget }
@@ -51,7 +53,7 @@ object GuideTargetDao {
 
   // This is the straw that broke the camel's back.  TreeMap[Id.TargetGroup, List[(Id.GuideStar, GuideTarget)]]
 
-  def selectObsWithId(oid: Observation.Id): ConnectionIO[Map[Int, List[(Int, GuideTarget)]]] =
+  def selectObsWithId(oid: Observation.Id): ConnectionIO[Map[Int, List[(GuideTarget.Id, GuideTarget)]]] =
     selectAll(Statements.selectObs(oid)).map {
       _.groupBy { case (g, _) => g.groupId }
        .mapValues { _.map { case (g, t) => (g.id, GuideTarget(t, g.guider)) } }
@@ -85,7 +87,7 @@ object GuideTargetDao {
         )
       """.update
 
-    def select(id: Int): Query0[ProtoGuideTarget] =
+    def select(id: GuideTarget.Id): Query0[ProtoGuideTarget] =
       sql"""
         SELECT id,
                group_id,
