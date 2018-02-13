@@ -17,7 +17,7 @@ object GuideTargetDao {
   final case class ProtoGuideTarget(
     id: Int,
     groupId: Int,
-    targetId: Int,
+    targetId: Target.Id,
     guider: Guider,
     obsIndex: Observation.Index
   ) {
@@ -64,7 +64,7 @@ object GuideTargetDao {
     import gem.dao.meta.ProgramIdMeta._
     import gem.dao.meta.ObservationIndexMeta._
 
-    def insert(gid: Int, tid: Int, guider: Guider, oid: Observation.Id, i: Instrument): Update0 =
+    def insert(gid: Int, tid: Target.Id, guider: Guider, oid: Observation.Id, i: Instrument): Update0 =
       sql"""
         INSERT INTO guide_star (
           group_id,
