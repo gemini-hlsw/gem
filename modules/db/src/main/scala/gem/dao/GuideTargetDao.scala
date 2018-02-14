@@ -18,15 +18,14 @@ import scala.collection.immutable.TreeMap
 object GuideTargetDao {
 
   final case class ProtoGuideTarget(
-    id: GuideTarget.Id,
-    groupId: GuideGroup.Id,
+    id:       GuideTarget.Id,
+    groupId:  GuideGroup.Id,
     targetId: Target.Id,
-    guider: Guider,
+    guider:   Guider,
     obsIndex: Observation.Index
   ) {
-
     def toGuideTarget: ConnectionIO[Option[GuideTarget]] =
-      TargetDao.select(targetId).map { _.map(GuideTarget(_, guider)) }
+      TargetDao.select(targetId).map(_.map(GuideTarget(_, guider)))
   }
 
   def insert(gid: GuideGroup.Id, oid: Observation.Id, guideTarget: GuideTarget, instrument: Instrument): ConnectionIO[GuideTarget.Id] =
@@ -44,9 +43,12 @@ object GuideTargetDao {
       t <- g.fold(Option.empty[GuideTarget].pure[ConnectionIO]) { _.toGuideTarget }
     } yield t
 
-  private def selectAll(
-    query: Query0[ProtoGuideTarget]
-  ): ConnectionIO[List[(ProtoGuideTarget, Target)]] =
+  // A selection of guide targets and the corresponding target.
+  private type Selection = List[(ProtoGuideTarget, Target)]
+
+  // Selects all the guide targets according to the query and pairs them with
+  // the corresponding target.
+  private def selectAll(query: Query0[ProtoGuideTarget]): ConnectionIO[Selection] =
     for {
       gs <- query.to[List]
       ts <- gs.map(_.targetId).traverse(TargetDao.select)
@@ -54,17 +56,59 @@ object GuideTargetDao {
       ot.map(t => (g, t)).toList
     }
 
+  // Groups a selection according to a function gf, maps the values of the
+  // resulting Map instance according to the function mf.
+  private def groupAndMap[A: Ordering, B](
+    gf: ProtoGuideTarget => A,
+    mf: Selection        => B
+  )(sel: Selection): TreeMap[A, B] =
+    TreeMap.grouping(sel) { case (g, _) => gf(g) }
+           .treeMapValues(mf)
+
+  // Groups a selection by guide target id, converting the ProtoGuideTarget into
+  // GuideTarget.
+  private def groupById(
+    sel: Selection
+  ): TreeMap[GuideTarget.Id, GuideTarget] =
+    sel.foldLeft(TreeMap.empty[GuideTarget.Id, GuideTarget]) { case (m, (g, t)) =>
+      m.updated(g.id, GuideTarget(t, g.guider))
+    }
+
+  // Converts a selection into a list of GuideTarget.
+  private def toGuideTargets(sel: Selection): List[GuideTarget] =
+    sel.map { case (g, t) => GuideTarget(t, g.guider) }
+
+  def selectGroup(gid: GuideGroup.Id): ConnectionIO[List[GuideTarget]] =
+    selectAll(Statements.selectGroup(gid))
+      .map(toGuideTargets)
+
+  def selectGroupWithId(gid: GuideGroup.Id): ConnectionIO[TreeMap[GuideTarget.Id, GuideTarget]] =
+    selectAll(Statements.selectGroup(gid))
+      .map(groupById)
+
+  def selectObs(
+    oid: Observation.Id
+  ): ConnectionIO[TreeMap[GuideGroup.Id, List[GuideTarget]]] =
+    selectAll(Statements.selectObs(oid))
+      .map(groupAndMap(_.groupId, toGuideTargets))
+
   def selectObsWithId(
     oid: Observation.Id
   ): ConnectionIO[TreeMap[GuideGroup.Id, TreeMap[GuideTarget.Id, GuideTarget]]] =
-    selectAll(Statements.selectObs(oid)).map { l =>
-      TreeMap.groupBy(l) { case (g, _) => g.groupId }
-             .treeMapValues {
-               _.foldLeft(TreeMap.empty[GuideTarget.Id, GuideTarget]) { case (m, (g, t)) =>
-                 m.updated(g.id, GuideTarget(t, g.guider))
-               }
-             }
-    }
+    selectAll(Statements.selectObs(oid))
+      .map(groupAndMap(_.groupId, groupById))
+
+  def selectProg(
+    pid: Program.Id
+  ): ConnectionIO[TreeMap[Observation.Index, TreeMap[GuideGroup.Id, List[GuideTarget]]]] =
+    selectAll(Statements.selectProg(pid))
+      .map(groupAndMap(_.obsIndex, groupAndMap(_.groupId, toGuideTargets)))
+
+  def selectProgWithId(
+    pid: Program.Id
+  ): ConnectionIO[TreeMap[Observation.Index, TreeMap[GuideGroup.Id, TreeMap[GuideTarget.Id, GuideTarget]]]] =
+    selectAll(Statements.selectProg(pid))
+      .map(groupAndMap(_.obsIndex, groupAndMap(_.groupId, groupById)))
 
   object Statements {
 
@@ -105,7 +149,7 @@ object GuideTargetDao {
          WHERE id = $id
       """.query[ProtoGuideTarget]
 
-    def selectGroup(gid: Int): Query0[ProtoGuideTarget] =
+    def selectGroup(gid: GuideGroup.Id): Query0[ProtoGuideTarget] =
       sql"""
         SELECT id,
                group_id,

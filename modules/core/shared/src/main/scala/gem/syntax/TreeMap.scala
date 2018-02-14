@@ -29,9 +29,9 @@ final class TreeMapCompanionOps(val self: TreeMap.type) extends AnyVal {
     ms.foldLeft(TreeMap.empty[A, B]) { case (m0, m1) => m0 ++ m1 }
 
   /** Groups a `List[A]` by the given key.  Like traversable `groupBy` but
-    * producting a `TreeMap`.
+    * producing a `TreeMap`.
     */
-  def groupBy[K: Ordering, A](l: List[A])(f: A => K): TreeMap[K, List[A]] =
+  def grouping[K: Ordering, A](l: List[A])(f: A => K): TreeMap[K, List[A]] =
     l.foldRight(TreeMap.empty[K, List[A]]) { case (a, m) =>
       val k = f(a)
       m.updated(k, a :: m.getOrElse(k, List.empty[A]))
