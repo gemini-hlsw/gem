@@ -6,17 +6,20 @@ package dao
 
 import gem.dao.meta._
 import gem.enum.{Guider, Instrument}
+import gem.syntax.treemap._
 
 import cats.implicits._
 import doobie._
 import doobie.implicits._
+
+import scala.collection.immutable.TreeMap
 
 
 object GuideTargetDao {
 
   final case class ProtoGuideTarget(
     id: GuideTarget.Id,
-    groupId: Int,
+    groupId: GuideGroup.Id,
     targetId: Target.Id,
     guider: Guider,
     obsIndex: Observation.Index
@@ -26,7 +29,7 @@ object GuideTargetDao {
       TargetDao.select(targetId).map { _.map(GuideTarget(_, guider)) }
   }
 
-  def insert(gid: Int, oid: Observation.Id, guideTarget: GuideTarget, instrument: Instrument): ConnectionIO[GuideTarget.Id] =
+  def insert(gid: GuideGroup.Id, oid: Observation.Id, guideTarget: GuideTarget, instrument: Instrument): ConnectionIO[GuideTarget.Id] =
     for {
       t <- TargetDao.insert(guideTarget.target)
       i <- Statements.insert(gid, t, guideTarget.guider, oid, instrument)
@@ -51,12 +54,16 @@ object GuideTargetDao {
       ot.map(t => (g, t)).toList
     }
 
-  // This is the straw that broke the camel's back.  TreeMap[Id.TargetGroup, List[(Id.GuideStar, GuideTarget)]]
-
-  def selectObsWithId(oid: Observation.Id): ConnectionIO[Map[Int, List[(GuideTarget.Id, GuideTarget)]]] =
-    selectAll(Statements.selectObs(oid)).map {
-      _.groupBy { case (g, _) => g.groupId }
-       .mapValues { _.map { case (g, t) => (g.id, GuideTarget(t, g.guider)) } }
+  def selectObsWithId(
+    oid: Observation.Id
+  ): ConnectionIO[TreeMap[GuideGroup.Id, TreeMap[GuideTarget.Id, GuideTarget]]] =
+    selectAll(Statements.selectObs(oid)).map { l =>
+      TreeMap.groupBy(l) { case (g, _) => g.groupId }
+             .treeMapValues {
+               _.foldLeft(TreeMap.empty[GuideTarget.Id, GuideTarget]) { case (m, (g, t)) =>
+                 m.updated(g.id, GuideTarget(t, g.guider))
+               }
+             }
     }
 
   object Statements {
@@ -66,7 +73,7 @@ object GuideTargetDao {
     import gem.dao.meta.ProgramIdMeta._
     import gem.dao.meta.ObservationIndexMeta._
 
-    def insert(gid: Int, tid: Target.Id, guider: Guider, oid: Observation.Id, i: Instrument): Update0 =
+    def insert(gid: GuideGroup.Id, tid: Target.Id, guider: Guider, oid: Observation.Id, i: Instrument): Update0 =
       sql"""
         INSERT INTO guide_star (
           group_id,

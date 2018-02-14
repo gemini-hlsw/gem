@@ -4,7 +4,7 @@
 package gem.dao
 package check
 
-import gem.{ GuideTarget, Target }
+import gem.{ GuideGroup, GuideTarget, Target }
 import gem.enum.Guider
 
 
@@ -13,9 +13,9 @@ class GuideTargetCheck extends Check {
   import GuideTargetDao.Statements._
 
   "GuideTargetDao" should
-            "insert"      in check(insert(0, Target.Id(0), Guider.GmosSOi, Dummy.observationId, Dummy.instrument))
+            "insert"      in check(insert(GuideGroup.Id(0), Target.Id(0), Guider.GmosSOi, Dummy.observationId, Dummy.instrument))
   it should "select"      in check(select(GuideTarget.Id(0)))
-  it should "selectGroup" in check(selectGroup(0))
+  it should "selectGroup" in check(selectGroup(GuideGroup.Id(0)))
   it should "selectObs"   in check(selectObs(Dummy.observationId))
   it should "selectProg"  in check(selectProg(Dummy.programId))
 
