@@ -6,7 +6,6 @@ package dao
 
 import gem.dao.meta._
 import gem.enum.{Guider, Instrument}
-import gem.syntax.treemap._
 
 import cats.implicits._
 import doobie._
@@ -14,19 +13,19 @@ import doobie.implicits._
 
 import scala.collection.immutable.TreeMap
 
+final case class ProtoGuideTarget(
+  id:       GuideTarget.Id,
+  groupId:  GuideGroup.Id,
+  targetId: Target.Id,
+  guider:   Guider,
+  obsIndex: Observation.Index
+) extends ProtoTargetWrapper[GuideTarget.Id, GuideTarget] {
 
-object GuideTargetDao {
+  override def wrap(t: Target): GuideTarget =
+    GuideTarget(t, guider)
+}
 
-  final case class ProtoGuideTarget(
-    id:       GuideTarget.Id,
-    groupId:  GuideGroup.Id,
-    targetId: Target.Id,
-    guider:   Guider,
-    obsIndex: Observation.Index
-  ) {
-    def toGuideTarget: ConnectionIO[Option[GuideTarget]] =
-      TargetDao.select(targetId).map(_.map(GuideTarget(_, guider)))
-  }
+object GuideTargetDao extends TargetWrapperDao[GuideTarget.Id, GuideTarget, ProtoGuideTarget] {
 
   def insert(gid: GuideGroup.Id, oid: Observation.Id, guideTarget: GuideTarget, instrument: Instrument): ConnectionIO[GuideTarget.Id] =
     for {
@@ -38,59 +37,19 @@ object GuideTargetDao {
 
   /** Selects the single `GuideTarget` associated with the given id, if any. */
   def select(id: GuideTarget.Id): ConnectionIO[Option[GuideTarget]] =
-    for {
-      g <- Statements.select(id).option
-      t <- g.fold(Option.empty[GuideTarget].pure[ConnectionIO]) { _.toGuideTarget }
-    } yield t
-
-  // A selection of guide targets and the corresponding target.
-  private type Selection = List[(ProtoGuideTarget, Target)]
-
-  // Selects all the guide targets according to the query and pairs them with
-  // the corresponding target.
-  private def selectAll(query: Query0[ProtoGuideTarget]): ConnectionIO[Selection] =
-    for {
-      gs <- query.to[List]
-      ts <- gs.map(_.targetId).traverse(TargetDao.select)
-    } yield gs.zip(ts).flatMap { case (g, ot) =>
-      ot.map(t => (g, t)).toList
-    }
-
-  // Groups a selection according to a function gf, maps the values of the
-  // resulting Map instance according to the function mf.
-  private def groupAndMap[A: Ordering, B](
-    gf: ProtoGuideTarget => A,
-    mf: Selection        => B
-  )(sel: Selection): TreeMap[A, B] =
-    TreeMap.grouping(sel) { case (g, _) => gf(g) }
-           .treeMapValues(mf)
-
-  // Groups a selection by guide target id, converting the ProtoGuideTarget into
-  // GuideTarget.
-  private def groupById(
-    sel: Selection
-  ): TreeMap[GuideTarget.Id, GuideTarget] =
-    sel.foldLeft(TreeMap.empty[GuideTarget.Id, GuideTarget]) { case (m, (g, t)) =>
-      m.updated(g.id, GuideTarget(t, g.guider))
-    }
-
-  // Converts a selection into a list of GuideTarget.
-  private def toGuideTargets(sel: Selection): List[GuideTarget] =
-    sel.map { case (g, t) => GuideTarget(t, g.guider) }
+    selectOne(Statements.select(id))
 
   def selectGroup(gid: GuideGroup.Id): ConnectionIO[List[GuideTarget]] =
-    selectAll(Statements.selectGroup(gid))
-      .map(toGuideTargets)
+    selectAll(Statements.selectGroup(gid)).map(wrapAll)
 
   def selectGroupWithId(gid: GuideGroup.Id): ConnectionIO[TreeMap[GuideTarget.Id, GuideTarget]] =
-    selectAll(Statements.selectGroup(gid))
-      .map(groupById)
+    selectAll(Statements.selectGroup(gid)).map(groupById)
 
   def selectObs(
     oid: Observation.Id
   ): ConnectionIO[TreeMap[GuideGroup.Id, List[GuideTarget]]] =
     selectAll(Statements.selectObs(oid))
-      .map(groupAndMap(_.groupId, toGuideTargets))
+      .map(groupAndMap(_.groupId, wrapAll))
 
   def selectObsWithId(
     oid: Observation.Id
@@ -102,7 +61,7 @@ object GuideTargetDao {
     pid: Program.Id
   ): ConnectionIO[TreeMap[Observation.Index, TreeMap[GuideGroup.Id, List[GuideTarget]]]] =
     selectAll(Statements.selectProg(pid))
-      .map(groupAndMap(_.obsIndex, groupAndMap(_.groupId, toGuideTargets)))
+      .map(groupAndMap(_.obsIndex, groupAndMap(_.groupId, wrapAll)))
 
   def selectProgWithId(
     pid: Program.Id
