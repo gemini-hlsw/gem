@@ -17,9 +17,13 @@ sealed abstract class Guider(
   val instrument: Option[Instrument],
   val shortName: String,
   val longName: String
-) extends Product with Serializable
+) extends Product with Serializable {
+  type Self = this.type
+}
 
 object Guider {
+
+  type Aux[A] = Guider { type Self = A }
 
   /** @group Constructors */ case object F2Oi extends Guider("F2Oi", Some(Instrument.Flamingos2), "F2 OI", "Flamingos2 OIWFS")
   /** @group Constructors */ case object GmosSOi extends Guider("GmosSOi", Some(Instrument.GmosS), "GMOS-S OI", "GMOS South OIWFS")
