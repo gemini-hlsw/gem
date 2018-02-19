@@ -13,7 +13,7 @@ class GuideTargetCheck extends Check {
   import GuideTargetDao.Statements._
 
   "GuideTargetDao" should
-            "insert"      in check(insert(GuideGroup.Id(0), Target.Id(0), Guider.GmosSOi, Dummy.observationId, Dummy.instrument))
+            "insert"      in check(insert(GuideGroup.Id(0), Target.Id(0), Guider.GmosSOI, Dummy.observationId, Dummy.instrument))
   it should "select"      in check(select(GuideTarget.Id(0)))
   it should "selectGroup" in check(selectGroup(GuideGroup.Id(0)))
   it should "selectObs"   in check(selectObs(Dummy.observationId))

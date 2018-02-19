@@ -19,13 +19,13 @@ CREATE TABLE e_guider (
 ALTER TABLE e_guider OWNER TO postgres;
 
 COPY e_guider (id, instrument, short_name, long_name) FROM stdin;
-F2Oi	Flamingos2	F2 OI	Flamingos2 OIWFS
-GmosSOi	GmosS	GMOS-S OI	GMOS South OIWFS
-GmosNOi	GmosN	GMOS-N OI	GMOS North OIWFS
-P1Gn	\N	P1 GN	PWFS1 North
-P1Gs	\N	P2 GS	PWFS2 North
-P2Gn	\N	P2 GN	PWFS2 South
-P2Gs	\N	P2 GS	PWFS2 South
+F2OI	Flamingos2	F2 OI	Flamingos2 OIWFS
+GmosNOI	GmosN	GMOS-N OI	GMOS North OIWFS
+GmosSOI	GmosS	GMOS-S OI	GMOS South OIWFS
+P1GN	\N	P1 GN	PWFS1 North
+P1GS	\N	P1 GS	PWFS1 South
+P2GN	\N	P2 GN	PWFS2 North
+P2GS	\N	P2 GS	PWFS2 South
 \.
 
 

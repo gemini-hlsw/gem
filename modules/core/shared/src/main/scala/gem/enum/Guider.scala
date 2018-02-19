@@ -25,17 +25,17 @@ object Guider {
 
   type Aux[A] = Guider { type Self = A }
 
-  /** @group Constructors */ case object F2Oi extends Guider("F2Oi", Some(Instrument.Flamingos2), "F2 OI", "Flamingos2 OIWFS")
-  /** @group Constructors */ case object GmosSOi extends Guider("GmosSOi", Some(Instrument.GmosS), "GMOS-S OI", "GMOS South OIWFS")
-  /** @group Constructors */ case object GmosNOi extends Guider("GmosNOi", Some(Instrument.GmosN), "GMOS-N OI", "GMOS North OIWFS")
-  /** @group Constructors */ case object P1Gn extends Guider("P1Gn", None, "P1 GN", "PWFS1 North")
-  /** @group Constructors */ case object P1Gs extends Guider("P1Gs", None, "P2 GS", "PWFS2 North")
-  /** @group Constructors */ case object P2Gn extends Guider("P2Gn", None, "P2 GN", "PWFS2 South")
-  /** @group Constructors */ case object P2Gs extends Guider("P2Gs", None, "P2 GS", "PWFS2 South")
+  /** @group Constructors */ case object F2OI extends Guider("F2OI", Some(Instrument.Flamingos2), "F2 OI", "Flamingos2 OIWFS")
+  /** @group Constructors */ case object GmosNOI extends Guider("GmosNOI", Some(Instrument.GmosN), "GMOS-N OI", "GMOS North OIWFS")
+  /** @group Constructors */ case object GmosSOI extends Guider("GmosSOI", Some(Instrument.GmosS), "GMOS-S OI", "GMOS South OIWFS")
+  /** @group Constructors */ case object P1GN extends Guider("P1GN", None, "P1 GN", "PWFS1 North")
+  /** @group Constructors */ case object P1GS extends Guider("P1GS", None, "P1 GS", "PWFS1 South")
+  /** @group Constructors */ case object P2GN extends Guider("P2GN", None, "P2 GN", "PWFS2 North")
+  /** @group Constructors */ case object P2GS extends Guider("P2GS", None, "P2 GS", "PWFS2 South")
 
   /** All members of Guider, in canonical order. */
   val all: List[Guider] =
-    List(F2Oi, GmosSOi, GmosNOi, P1Gn, P1Gs, P2Gn, P2Gs)
+    List(F2OI, GmosNOI, GmosSOI, P1GN, P1GS, P2GN, P2GS)
 
   /** Select the member of Guider with the given tag, if any. */
   def fromTag(s: String): Option[Guider] =

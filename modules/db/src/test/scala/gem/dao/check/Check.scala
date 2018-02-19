@@ -94,7 +94,7 @@ trait Check extends FlatSpec with Matchers with IOChecker {
       Target("untitled", Right(ProperMotion.const(Coordinates.Zero)))
 
     val guideTarget: GuideTarget =
-      GuideTarget(target, Guider.GmosSOi)
+      GuideTarget(target, Guider.GmosSOI)
 
   }
 
