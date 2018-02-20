@@ -17,7 +17,10 @@ sealed trait GuideGroup {
 
   type I <: Instrument with Singleton
 
+  def instrument: Instrument
+
   def groupType: GuideGroupType
+
   def targets: TreeMap[GuiderRef.Aux[I], Target]
 }
 
@@ -29,6 +32,7 @@ object GuideGroup {
   object Aux {
 
     private final case class Impl[I0 <: Instrument with Singleton](
+      instrument: Instrument.Aux[I0],
       groupType: GuideGroupType,
       targets: TreeMap[GuiderRef.Aux[I0], Target]
     ) extends GuideGroup {
@@ -36,13 +40,17 @@ object GuideGroup {
     }
 
     def apply[I0 <: Instrument with Singleton](
+      instrument: Instrument.Aux[I0],
       groupType: GuideGroupType,
       targets: TreeMap[GuiderRef.Aux[I0], Target]
     ): GuideGroup.Aux[I0] =
-      Impl(groupType, targets)
+      Impl(instrument, groupType, targets)
 
-    def empty[I <: Instrument with Singleton](groupType: GuideGroupType): GuideGroup.Aux[I] =
-      apply(groupType, TreeMap.empty[GuiderRef.Aux[I], Target])
+//    def empty[I <: Instrument with Singleton](
+//      instrument: Instrument.Aux[I],
+//      groupType: GuideGroupType
+//    ): GuideGroup.Aux[I] =
+//      apply(instrument, groupType, TreeMap.empty[GuiderRef.Aux[I], Target])
 
   }
 

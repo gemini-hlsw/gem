@@ -57,4 +57,7 @@ object GuiderRef {
 
   final implicit def OrderGuiderRef[I <: Instrument with Singleton]: Order[GuiderRef.Aux[I]] =
     Order.by(gr => (gr.instrument.tag, gr.guider))
+
+  final implicit def OrderGuiderRef2: Order[GuiderRef] =
+    Order.by(gr => (gr.instrument.tag, gr.guider))
 }
