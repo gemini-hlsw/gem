@@ -22,7 +22,6 @@ import java.time.{ Duration, Period }
 
 import fs2.Stream
 
-import scala.math.Ordering.Implicits._
 
 /** Utility for inserting / updating en ephemeris. */
 final case class HorizonsEphemerisUpdater[M[_]: Monad: LiftIO](xa: Transactor[M]) {
@@ -34,13 +33,13 @@ final case class HorizonsEphemerisUpdater[M[_]: Monad: LiftIO](xa: Transactor[M]
     * whether an update is needed, to see when the last update was performed,
     * and when the last update check happened.
     */
-  def context(key:  EphemerisKey.Horizons, site: Site): M[Context] =
+  def report(key:  EphemerisKey.Horizons, site: Site): M[EphemerisContext] =
 
     (for {
       meta <- EphemerisDao.selectMeta(key, site)
       rnge <- EphemerisDao.selectTimes(key, site)
       soln <- HorizonsSolutionRefQuery(key).lookup.liftIO[ConnectionIO]
-    } yield Context(key, site, meta, rnge, soln)).transact(xa)
+    } yield EphemerisContext(key, site, meta, rnge, soln)).transact(xa)
 
 
   /** Constructs an action that when run will insert a new ephemeris or update
@@ -51,7 +50,7 @@ final case class HorizonsEphemerisUpdater[M[_]: Monad: LiftIO](xa: Transactor[M]
     for {
       time <- Timestamp.now.liftIO[M]
       sem  <- Semester.current(site).liftIO[M]
-      ctx  <- context(key, site)
+      ctx  <- report(key, site)
       _    <- updateIfNecessary(ctx, time, sem).transact(xa)
     } yield ()
 
@@ -77,7 +76,7 @@ final case class HorizonsEphemerisUpdater[M[_]: Monad: LiftIO](xa: Transactor[M]
 
 
   private def updateIfNecessary(
-    ctx:  Context,
+    ctx:  EphemerisContext,
     time: Timestamp,
     sem:  Semester
   ): ConnectionIO[Unit] =
@@ -87,7 +86,7 @@ final case class HorizonsEphemerisUpdater[M[_]: Monad: LiftIO](xa: Transactor[M]
 
 
   private def recordUpdateCheck(
-    ctx:  Context,
+    ctx:  EphemerisContext,
     time: Timestamp
   ): ConnectionIO[Unit] =
 
@@ -97,7 +96,7 @@ final case class HorizonsEphemerisUpdater[M[_]: Monad: LiftIO](xa: Transactor[M]
 
 
   private def doUpdate(
-    ctx:  Context,
+    ctx:  EphemerisContext,
     time: Timestamp,
     sem:  Semester
   ): ConnectionIO[Unit] = {
@@ -134,44 +133,5 @@ object HorizonsEphemerisUpdater {
     */
   val StepSize: Duration =
     Duration.ofMinutes(1L)
-
-  /** Collection of information related to an ephemeris.  Used to determine
-    * whether an update is needed.
-    *
-    * @param key  unique horizons id of the object
-    * @param site information valid for the given site
-    * @param meta associated ephemeris metadata, if any
-    * @param rnge earliest and latest ephemeris element times, if any
-    * @param soln current horizons solution reference from JPL, if any
-    */
-  final case class Context(
-    key:  EphemerisKey.Horizons,
-    site: Site,
-    meta: Option[EphemerisMeta],
-    rnge: Option[(Timestamp, Timestamp)],
-    soln: Option[HorizonsSolutionRef]
-  ) {
-
-    /** Determines whether the existing ephemeris, if any, covers the given
-      * semester.
-      */
-    def coversSemester(sem: Semester): Boolean =
-      rnge.exists { case (start, end) =>
-        (start.toInstant <= sem.start.atSite(site).toInstant) &&
-          (sem.end.atSite(site).toInstant <= end.toInstant)
-      }
-
-    /** Whether the database and latest horizons version data matches. */
-    val sameSolution: Boolean =
-      (meta.flatMap(_.solnRef), soln).tupled.exists { case (s0, s1) =>
-        s0 === s1
-      }
-
-    /** Determines whether updates are needed to obtain the latest ephemeris for
-      * the given semester.
-      */
-    def isUpToDateFor(sem: Semester): Boolean =
-      coversSemester(sem) && sameSolution
-  }
 
 }
