@@ -4,7 +4,6 @@
 package gem.horizons
 
 import gem.{ EphemerisKey, Log }
-import gem.dao.UserDao
 import gem.enum.Site
 
 import cats.effect.IO
@@ -84,9 +83,8 @@ object HorizonsUpdaterApp {
 
       case Right(cmd) =>
         for {
-          user <- UserDao.selectRootUser.transact(xa)
           log  <- Log.newLogIn[ConnectionIO, IO]("HorizonsEphemerisUpdater", xa)
-          up    = HorizonsEphemerisUpdater(user, log, xa)
+          up    = HorizonsEphemerisUpdater(xa)
           _    <- cmd.keys.traverse(up.update(_, cmd.site))
           _    <- log.shutdown(5 * 1000).transact(xa)
         } yield ()
