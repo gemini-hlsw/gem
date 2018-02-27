@@ -98,4 +98,17 @@ package object enum extends ToPrismOps {
         case _: Asterism.GhostDualTarget => AsterismType.GhostDualTarget
       }
   }
+
+  implicit class GuiderOps(val value: Guider) extends AnyVal {
+    def toRef(i: Instrument): GuiderRef =
+      value match {
+        case Guider.F2OI    => GuiderRef.F2OI
+        case Guider.GmosNOI => GuiderRef.GmosNOI
+        case Guider.GmosSOI => GuiderRef.GmosSOI
+        case Guider.P1GN    => GuiderRef.P1GN(i: Instrument.Aux[i.type])
+        case Guider.P1GS    => GuiderRef.P1GS(i: Instrument.Aux[i.type])
+        case Guider.P2GN    => GuiderRef.P2GN(i: Instrument.Aux[i.type])
+        case Guider.P2GS    => GuiderRef.P2GS(i: Instrument.Aux[i.type])
+      }
+  }
 }

@@ -63,6 +63,7 @@ trait Check extends FlatSpec with Matchers with IOChecker {
     val ephemerisKey     = EphemerisKey.Comet("Lanrezac")
     val horizonsSolnRef  = HorizonsSolutionRef("JPL#K162/5")
     val ephemerisMeta    = EphemerisMeta(Timestamp.Min, Timestamp.Min, Some(horizonsSolnRef))
+    val instrument       = Instrument.Flamingos2
 
     val gmosCustomRoiEntry =
       gem.config.GmosConfig.GmosCustomRoiEntry.unsafeFromDescription(1, 1, 1, 1)
@@ -91,6 +92,9 @@ trait Check extends FlatSpec with Matchers with IOChecker {
 
     val target: Target =
       Target("untitled", Right(ProperMotion.const(Coordinates.Zero)))
+
+    val guideTarget: GuideTarget =
+      GuideTarget(target, Guider.GmosSOI)
 
   }
 
