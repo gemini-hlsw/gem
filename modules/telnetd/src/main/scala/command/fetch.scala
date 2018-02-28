@@ -15,8 +15,6 @@ import tuco.shell._
   */
 object fetch {
 
-  type EitherId = Either[Program.Id, Observation.Id]
-
   val host: Opts[String] =
     Opts.option[String](
       help    = s"ODB hostname (default localhost)",
@@ -25,22 +23,38 @@ object fetch {
       long    = "host"
     ).withDefault("localhost")
 
-  val id: Opts[EitherId] =
+  val oid: Opts[Observation.Id] =
     Opts.argument[String](
-      metavar = "id"
+      metavar = "obs-id"
     ).mapValidated { s =>
-      val id = Observation.Id.fromString(s).map(_.asRight[Program.Id]) orElse
-                 ProgramId.fromString(s).map(_.asLeft[Observation.Id])
-
-      id.toValidNel(s"Could not parse '$s' as an observation or program id")
+      Observation.Id.fromString(s).toValidNel(s"Could not parse '$s' as an observation id")
     }
 
-  val command: GemCommand =
+  val pid: Opts[Program.Id] =
+    Opts.argument[String](
+      metavar = "prog-id"
+    ).mapValidated { s =>
+      ProgramId.fromString(s).toValidNel(s"Could not parse '$s' as a program id")
+    }
+
+  val obsCommand: GemCommand =
     Command(
-      "fetch", "Fetch an observation or program from an OCS2 ODB.",
-      (host, id).mapN { (h: String, id: EitherId) => (d: GemState) => {
+      "fetch-obs", "Fetch an observation from an OCS2 ODB and store it.",
+      (host, oid).mapN { (h: String, id: Observation.Id) => (d: GemState) => {
         for {
-          _ <- writeLn(s"fetch $h $id")
+          r <- d.ocs2.importObservation(h, id)
+          _ <- writeLn(r.fold(m => s"Failed to import ${id.format}: $m", _ => s"Imported ${id.format}"))
+        } yield d
+      }}
+    ).zoom(Session.data[GemState])
+
+  val progCommand: GemCommand =
+    Command(
+      "fetch-prog", "Fetch a program from an OCS2 ODB and store it.",
+      (host, pid).mapN { (h: String, id: Program.Id) => (d: GemState) => {
+        for {
+          r <- d.ocs2.importProgram(h, id)
+          _ <- writeLn(r.fold(m => s"Failed to import ${id.format}: $m", _ => s"Imported ${id.format}"))
         } yield d
       }}
     ).zoom(Session.data[GemState])
