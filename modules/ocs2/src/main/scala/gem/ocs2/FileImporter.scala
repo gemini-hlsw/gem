@@ -18,7 +18,7 @@ import scala.xml.{XML, Elem}
   * Ocs3ExportServlet at http://g[ns]odb:8442/ocs3/fetch/programId or
   * by using the OSGi shell command "exportOcs3" from the ODB shell.
   */
-object FileImporter extends DoobieClient {
+object FileImporter extends DoobieClient with DevTransactor {
 
   type Prog = Program[Observation.Full]
 
@@ -44,14 +44,11 @@ object FileImporter extends DoobieClient {
   def read(f: File): IO[Elem] =
     IO(XML.loadFile(f))
 
-  def insert(u: User[_], p: Program[Observation.Full], ds: List[Dataset], log: Log[ConnectionIO]): ConnectionIO[Unit] =
-    Importer.writeProgram(p, ds)(u, log)
-
   def readAndInsert(u: User[_], f: File, log: Log[ConnectionIO]): IO[Unit] =
     read(f).flatMap { elem =>
       PioDecoder[(Prog, List[Dataset])].decode(elem) match {
         case Left(err)      => sys.error(s"Problem parsing ${f.getName}: $err")
-        case Right((p, ds)) => log.log(u, s"insert ${p.id}")(insert(u, p, ds, log)).transact(xa)
+        case Right((p, ds)) => log.log(u, s"insert ${p.id}")(Importer.importProgram(p, ds)).transact(xa)
       }
     }.handleErrorWith(e => IO(e.printStackTrace))
 
@@ -64,10 +61,10 @@ object FileImporter extends DoobieClient {
   def runl(args: List[String]): IO[Unit] =
     for {
       u <- UserDao.selectRootUser.transact(xa)
-      l <- Log.newLog[ConnectionIO]("importer", lxa).transact(xa)
+      l <- Log.newLog[ConnectionIO]("importer", xa).transact(xa)
       n <- IO(args.headOption.map(_.toInt).getOrElse(Int.MaxValue))
       _ <- checkArchive
-      _ <- IO(configureLogging)
+      _ <- configureLogging[IO]
       _ <- clean
       _ <- readAndInsertAll(u, n, l)
       _ <- l.shutdown(5 * 1000).transact(xa) // if we're not done soon something is wrong

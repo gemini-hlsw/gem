@@ -21,7 +21,7 @@ import scala.concurrent.ExecutionContext
   * loaded, it is deleted and wholly replaced by the latest version from the
   * ODB.
   */
-final class ImportServer(ocsHost: String) {
+final class ImportServer(ocsHost: String) extends DevTransactor {
 
   private def badRequest(id: String, idType: String): IO[Response[IO]] =
     BadRequest(s"Could not parse $idType id '$id'")
@@ -44,16 +44,15 @@ final class ImportServer(ocsHost: String) {
       obsIdStr,
       Observation.Id.fromString,
       "observation",
-      OdbClient.importObservation(ocsHost, _)
+      OdbClient.importObservation(ocsHost, _, xa)
     )
-
 
   def importProgram(pidStr: String): IO[Response[IO]] = {
     importRemote[Program.Id](
       pidStr,
       ProgramId.fromString,
       "program",
-      OdbClient.importProgram(ocsHost, _)
+      OdbClient.importProgram(ocsHost, _, xa)
     )
   }
 }

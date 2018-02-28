@@ -25,7 +25,7 @@ import scala.reflect.runtime.universe._
   * some cases instead of the seqexec values since they were meant to be edited
   * by science staff.
   */
-object SmartGcalImporter extends DoobieClient {
+object SmartGcalImporter extends DoobieClient with DevTransactor {
 
   implicit class ParseOps(s: String) {
     def parseAs[A: TypeTag](parse: PioParse[A]): A =
@@ -186,23 +186,23 @@ object SmartGcalImporter extends DoobieClient {
 
     val prog = (lines(GcalLampType.Arc) ++ lines(GcalLampType.Flat))
       .segmentN(4096)
-      .flatMap { v => writer(v.force.toVector).transact(lxa) }
+      .flatMap { v => writer(v.force.toVector).transact(xa) }
 
     for {
       _ <- IO(println(s"Importing $instFilePrefix ...")) // scalastyle:ignore
-      _ <- unindexer.transact(lxa)
+      _ <- unindexer.transact(xa)
       _ <- prog.compile.drain
-      _ <- indexer.transact(lxa)
+      _ <- indexer.transact(xa)
     } yield ()
   }
 
   def runc: IO[Unit] =
     for {
-      u <- UserDao.selectRootUser.transact(lxa)
-      l <- Log.newLog[IO]("smartgcal importer", lxa)
+      u <- UserDao.selectRootUser.transact(xa)
+      l <- Log.newLog[IO]("smartgcal importer", xa)
       _ <- checkSmartDir
-      _ <- IO(configureLogging)
-      _ <- clean.transact(lxa)
+      _ <- configureLogging[IO]
+      _ <- clean.transact(xa)
       _ <- importAllInst
       _ <- l.shutdown(5 * 1000)
       _ <- IO(println("Done.")) // scalastyle:ignore
