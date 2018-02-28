@@ -6,7 +6,7 @@ package gem.ocs2
 import cats.effect.IO, cats.implicits._
 import doobie._, doobie.implicits._
 import gem.{ Dataset, Log, Observation, Program, User }
-import gem.dao.UserDao
+import gem.dao.{ DatabaseConfiguration, UserDao }
 import gem.ocs2.Decoders._
 import gem.ocs2.pio.PioDecoder
 import java.io.File
@@ -18,7 +18,10 @@ import scala.xml.{XML, Elem}
   * Ocs3ExportServlet at http://g[ns]odb:8442/ocs3/fetch/programId or
   * by using the OSGi shell command "exportOcs3" from the ODB shell.
   */
-object FileImporter extends DoobieClient with DevTransactor {
+object FileImporter extends DoobieClient {
+
+  private val conf = DatabaseConfiguration.forTesting
+  private val xa   = conf.transactor[IO]
 
   type Prog = Program[Observation.Full]
 
@@ -36,7 +39,7 @@ object FileImporter extends DoobieClient with DevTransactor {
   val clean: IO[Int] =
     IO {
       val flyway = new Flyway()
-      flyway.setDataSource(Url, User, Pass)
+      flyway.setDataSource(conf.connectUrl, conf.userName, conf.password)
       flyway.clean()
       flyway.migrate()
     }

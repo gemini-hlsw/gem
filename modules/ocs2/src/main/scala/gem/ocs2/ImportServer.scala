@@ -4,10 +4,10 @@
 package gem
 package ocs2
 
-import cats.effect.IO, cats.implicits._
-
-import fs2.{ Stream, StreamApp }
-
+import cats.effect.IO
+import cats.implicits._
+import fs2.{Stream, StreamApp}
+import gem.dao.DatabaseConfiguration
 import org.http4s._
 import org.http4s.dsl.io._
 import org.http4s.server.blaze.BlazeBuilder
@@ -21,7 +21,9 @@ import scala.concurrent.ExecutionContext
   * loaded, it is deleted and wholly replaced by the latest version from the
   * ODB.
   */
-final class ImportServer(ocsHost: String) extends DevTransactor {
+final class ImportServer(ocsHost: String) {
+
+  private val xa = DatabaseConfiguration.forTesting.transactor[IO]
 
   private def badRequest(id: String, idType: String): IO[Response[IO]] =
     BadRequest(s"Could not parse $idType id '$id'")

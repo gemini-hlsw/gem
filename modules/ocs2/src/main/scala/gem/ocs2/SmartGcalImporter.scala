@@ -3,20 +3,22 @@
 
 package gem.ocs2
 
-import cats.effect.IO, cats.implicits._
+import cats.effect.IO
+import cats.implicits._
 import fs2.Stream
 import fs2.{io, text}
 import gem.Log
 import gem.config.GcalConfig
 import gem.config.DynamicConfig.SmartGcalKey
-import gem.dao.{ SmartGcalDao, UserDao }
-import gem.enum.{ GcalBaselineType, GcalLampType }
+import gem.dao.{DatabaseConfiguration, SmartGcalDao, UserDao}
+import gem.enum.{GcalBaselineType, GcalLampType}
 import gem.ocs2.pio.PioParse
 import gem.math.Wavelength
 
 import java.io.File
 import java.time.Duration
-import doobie._, doobie.implicits._
+import doobie._
+import doobie.implicits._
 
 import scala.reflect.runtime.universe._
 
@@ -25,7 +27,9 @@ import scala.reflect.runtime.universe._
   * some cases instead of the seqexec values since they were meant to be edited
   * by science staff.
   */
-object SmartGcalImporter extends DoobieClient with DevTransactor {
+object SmartGcalImporter extends DoobieClient {
+
+  private val xa = DatabaseConfiguration.forTesting.transactor[IO]
 
   implicit class ParseOps(s: String) {
     def parseAs[A: TypeTag](parse: PioParse[A]): A =
