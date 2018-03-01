@@ -67,9 +67,9 @@ trait ArbTime {
   implicit val arbTimestamp: Arbitrary[Timestamp] =
     Arbitrary {
       for {
-        m <- Gen.choose(0L, Duration.between(Timestamp.Min.toInstant, Timestamp.Max.toInstant).toMillis)
+        m <- Gen.choose(0L, Duration.between(Instant.EPOCH, Timestamp.Max.toInstant).toMillis)
         u <- Gen.choose(0, 999L)
-      } yield Timestamp.Min.plusMillis(m).flatMap(_.plusMicros(u)).getOrElse(Timestamp.Min)
+      } yield Timestamp.Epoch.plusMillis(m).flatMap(_.plusMicros(u)).getOrElse(Timestamp.Epoch)
     }
 
   implicit val arbDuration: Arbitrary[Duration] =
