@@ -21,7 +21,7 @@ import scala.math.Ordering.Implicits._
   * it is sometimes onger and sometimes shorter than a period of 24 hours.  This
   * is also true of days which contain leap seconds.
   */
-final case class ObservingNight private (start: Instant, end: Instant, site: Site) extends Night {
+sealed abstract case class ObservingNight(start: Instant, end: Instant, site: Site) extends Night {
 
   // Sanity check ... should be correct via the companion constructor
   assert(start < end)
@@ -77,17 +77,16 @@ object ObservingNight {
     */
   def forInstant(i: Instant, s: Site): ObservingNight = {
     val zdt   = ZonedDateTime.ofInstant(i, s.timezone)
-
-    val twoPM = zdt.withHour(LocalNightStartHour)
+    val bound = zdt.withHour(LocalNightStartHour)
                    .withMinute(0)
                    .withSecond(0)
                    .withNano(0)
 
     val (start, end) =
-      if (zdt.toLocalTime >= LocalNightStart) (twoPM, twoPM.plusDays(1L))
-      else (twoPM.minusDays(1L), twoPM)
+      if (zdt.toLocalTime >= LocalNightStart) (bound, bound.plusDays(1L))
+      else (bound.minusDays(1L), bound)
 
-    ObservingNight(start.toInstant, end.toInstant, s)
+    new ObservingNight(start.toInstant, end.toInstant, s) {}
   }
 
   /** Constructs the observing night for the given year, month, and day at the
