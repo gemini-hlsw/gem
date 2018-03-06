@@ -100,7 +100,6 @@ object ObservingNight {
       ZonedDateTime.of(year.getValue, month.getValue, day, 0, 0, 0, 0, site.timezone)
                    .minusNanos(1L)
                    .toInstant
-
     }.toOption.map(forInstant(_, site))
 
 

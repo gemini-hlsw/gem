@@ -45,6 +45,30 @@ final class ObservingNightSpec extends CatsSuite {
     }
   }
 
+  test("Is contiguous (1)") {
+    forAll { (o: ObservingNight) =>
+      o.previous.end shouldEqual o.start
+    }
+  }
+
+  test("Is contiguous (2)") {
+    forAll { (o: ObservingNight) =>
+      o.next.start shouldEqual o.end
+    }
+  }
+
+  test("Includes start") {
+    forAll { (o: ObservingNight) =>
+      o.includes(o.start) shouldBe true
+    }
+  }
+
+  test("Excludes end") {
+    forAll { (o: ObservingNight) =>
+      o.includes(o.end) shouldBe false
+    }
+  }
+
   test("night.previous.next shouldEqual night") {
     forAll { (o: ObservingNight) =>
       o.previous.next shouldEqual o
