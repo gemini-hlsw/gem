@@ -96,7 +96,7 @@ object ObservingNight {
     */
   def forYMD(year: Year, month: Month, day: Int, site: Site): Option[ObservingNight] =
     Validated.catchNonFatal {
-      ZonedDateTime.of(year.getValue, month.getValue, day, 0, 0, 0, 0, site.timezone)
+      ZonedDateTime.of(year.getValue, month.getValue, day, LocalNightStartHour, 0, 0, 0, site.timezone)
                    .minusNanos(1L)
                    .toInstant
     }.toOption.map(forInstant(_, site))
