@@ -88,7 +88,7 @@ object SmartGcalDao {
 
   type ExpansionResult[A] = EitherConnectionIO[ExpansionError, A]
 
-  private def lookupʹ(step: MaybeConnectionIO[Step[DynamicConfig]], loc: Location.Middle): ExpansionResult[ExpandedSteps] = {
+  private def lookupʹ(step: MaybeConnectionIO[Step[DynamicConfig]], loc: Location.Middle, static: StaticConfig): ExpansionResult[ExpandedSteps] = {
 
     // Information we need to extract from a smart gcal step in order to expand
     // it into manual gcal steps.  The key is used to look up the gcal config
@@ -102,7 +102,7 @@ object SmartGcalDao {
     val stepToContext: (Step[DynamicConfig]) => ExpansionResult[SmartContext] = {
       case Step.SmartGcal(d, t) =>
         EitherConnectionIO.fromDisjunction {
-          (d.smartGcalKey.toRight(noMappingDefined)).map { k => (k, t, d) }
+          (d.smartGcalKey(static).toRight(noMappingDefined)).map { k => (k, t, d) }
         }
       case _                    =>
         EitherConnectionIO.pointLeft(notSmartGcal)
@@ -135,7 +135,10 @@ object SmartGcalDao {
     *         its instrument configuration
     */
   def lookup(oid: Observation.Id, loc: Location.Middle): ExpansionResult[ExpandedSteps] =
-    lookupʹ(StepDao.selectOne(oid, loc), loc)
+    for {
+      o <- ObservationDao.selectStatic(oid).injectRight
+      s <- lookupʹ(StepDao.selectOne(oid, loc), loc, o.staticConfig)
+    } yield s
 
   /** Expands a smart gcal step into the corresponding gcal steps so that they
     * may be executed. Updates the sequence to replace a smart gcal step with
@@ -165,9 +168,10 @@ object SmartGcalDao {
       }.void
 
     for {
+      obs   <- ObservationDao.selectStatic(oid).injectRight
       steps <- StepDao.selectAll(oid).injectRight
       (locBefore, locAfter) = bounds(steps)
-      gcal  <- lookupʹ(MaybeConnectionIO.fromOption(steps.get(loc)), loc)
+      gcal  <- lookupʹ(MaybeConnectionIO.fromOption(steps.get(loc)), loc, obs.staticConfig)
       // replaces the smart gcal step with the expanded manual gcal steps
       _     <- StepDao.deleteAtLocation(oid, loc).injectRight
       _     <- insert(locBefore, gcal, locAfter).injectRight
