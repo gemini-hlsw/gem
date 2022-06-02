@@ -22,7 +22,7 @@ lazy val scalaXmlVerson       = "1.1.0"
 lazy val shapelessVersion     = "2.3.3"
 lazy val slf4jVersion         = "1.7.25"
 lazy val tucoVersion          = "0.3.1"
-lazy val scalaJavaTimeVersion = "2.0.0-M13"
+lazy val scalaJavaTimeVersion = "2.0.0"
 
 // our version is determined by the current git state (see project/ImageManifest.scala)
 def imageManifest = ImageManifest.current("postgres:9.6.0").unsafeRunSync
