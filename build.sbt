@@ -4,7 +4,7 @@ import sbtcrossproject.{crossProject, CrossType}
 lazy val circeVersion         = "0.9.3"
 lazy val attoVersion          = "0.6.2"
 lazy val catsEffectVersion    = "0.10.1"
-lazy val catsVersion          = "1.1.0"
+lazy val catsVersion          = "1.6.1"
 lazy val declineVersion       = "0.4.1"
 lazy val doobieVersion        = "0.5.3"
 lazy val flywayVersion        = "5.0.7"
