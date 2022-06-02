@@ -18,7 +18,7 @@ addSbtPlugin("de.heikoseeberger"  % "sbt-header"               % "4.1.0")
 addSbtPlugin("org.wartremover"    % "sbt-wartremover"          % "2.2.1")
 addSbtPlugin("org.scala-js"       % "sbt-scalajs"              % "0.6.23")
 addSbtPlugin("org.portable-scala" % "sbt-scalajs-crossproject" % "0.4.0")
-addSbtPlugin("net.virtual-void"   % "sbt-dependency-graph"     % "0.9.0")
+addSbtPlugin("net.virtual-void"   % "sbt-dependency-graph"     % "0.9.2")
 addSbtPlugin("com.timushev.sbt"   % "sbt-updates"              % "0.3.4")
 addSbtPlugin("io.github.cquiroz"  % "sbt-tzdb"                 % "0.1.2")
 
