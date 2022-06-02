@@ -2,7 +2,7 @@ import com.typesafe.sbt.packager.docker._
 import sbtcrossproject.{crossProject, CrossType}
 
 lazy val circeVersion         = "0.9.3"
-lazy val attoVersion          = "0.6.2"
+lazy val attoVersion          = "0.6.5"
 lazy val catsEffectVersion    = "0.10.1"
 lazy val catsVersion          = "1.1.0"
 lazy val declineVersion       = "0.4.1"
