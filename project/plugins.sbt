@@ -5,7 +5,7 @@ resolvers  ++= Seq(
 
 libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql"  % "42.2.1", // needed by flyway
-  "org.slf4j"      % "slf4j-nop"   % "1.7.25", // to silence some log messages
+  "org.slf4j"      % "slf4j-nop"   % "1.7.36", // to silence some log messages
   "org.typelevel" %% "cats-core"   % "1.0.1",
   "org.typelevel" %% "cats-effect" % "0.8"
 )
