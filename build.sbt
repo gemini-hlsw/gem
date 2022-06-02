@@ -111,7 +111,7 @@ lazy val commonSettings = Seq(
   wartremoverErrors in (Compile, compile) := gemWarts,
   wartremoverErrors in (Test,    compile) := gemWarts,
 
-  scalaVersion := "2.12.5",
+  scalaVersion := "2.12.15",
   scalacOptions ++= Seq(
     "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
     "-encoding", "utf-8",                // Specify character encoding used by source files.
